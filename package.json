@@ -1,0 +1,51 @@
+{
+  "name": "striim-cli",
+  "version": "0.1.0",
+  "description": "CLI interface for using the Hubii Striim APIs",
+  "main": "index.js",
+  "scripts": {
+    "test": "nyc mocha src/**/*.spec.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hubiinetwork/striim-cli.git"
+  },
+  "keywords": [
+    "hubii",
+    "striim",
+    "cli",
+    "sdk",
+    "api",
+    "micropayments",
+    "trading",
+    "dex",
+    "ethereum",
+    "layer2"
+  ],
+  "author": "Morten Fjeldstad <morten@hubii.com>",
+  "license": "SEE LICENSE FILE",
+  "bugs": {
+    "url": "https://github.com/hubiinetwork/striim-cli/issues"
+  },
+  "homepage": "https://github.com/hubiinetwork/striim-cli#readme",
+  "bin": {
+    "striim": "src/main.js"
+  },
+  "dependencies": {
+    "ethereumjs-util": "^5.2.0",
+    "keythereum": "^1.0.4",
+    "node-yaml": "^3.1.1",
+    "superagent": "^3.8.3",
+    "web3-utils": "^1.0.0-beta.35",
+    "yargs": "^12.0.1"
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "mocha": "^5.2.0",
+    "nock": "^9.4.4",
+    "nyc": "^12.0.2",
+    "proxyquire": "^2.0.1",
+    "sinon": "^6.1.4",
+    "sinon-chai": "^3.2.0"
+  }
+}
