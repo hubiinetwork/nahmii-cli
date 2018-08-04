@@ -17,15 +17,19 @@ module.exports = {
         })
     },
     handler : async (argv) => {
-        const configPath = path.resolve(os.homedir(), '.striim/config.yaml');
+        const configDir = path.resolve(os.homedir(), '.striim');
+        const configFile = path.resolve(configDir, 'config.yaml');
+        const keystoreDir = path.resolve(configDir, 'keystore');
 
-        if (!argv.force && fs.existsSync(configPath)) {
-            console.error('Config file already exists: ' + configPath);
+        if (!argv.force && fs.existsSync(configFile)) {
+            console.error('Config file already exists: ' + configFile);
             process.exit(-1);
         }
 
-        if (!fs.existsSync(path.dirname(configPath)))
-            fs.mkdirSync(path.dirname(configPath));
+        if (!fs.existsSync(configDir))
+            fs.mkdirSync(configDir);
+        if (!fs.existsSync(keystoreDir))
+            fs.mkdirSync(keystoreDir);
 
         console.log('Please specify the API server and credentials: [press ENTER for default value]');
         const apiRoot = readlineSync.question('apiRoot: [api2.dev.hubii.net] ') || 'api2.dev.hubii.net';
@@ -36,9 +40,9 @@ module.exports = {
 
         let config = {apiRoot, appId, appSecret, wallet: {address, secret}};
 
-        yaml.writeSync(configPath, config);
-        console.log('Template configuration created: ' + configPath);
+        yaml.writeSync(configFile, config);
+        console.log('Template configuration created: ' + configFile);
 
-        fs.chmodSync(configPath, 0o600);
+        fs.chmodSync(configFile, 0o600);
     }
 };
