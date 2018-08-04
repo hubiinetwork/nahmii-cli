@@ -1,16 +1,17 @@
 'use strict';
 
-const {createApiToken} = require('../sdk/identity-model');
-const {getSupportedTokens} = require('../sdk/tokens-model');
-const Payment = require('../sdk/payment-model');
 const {prefix0x} = require('../sdk/utils');
-const config = require('../config');
 
 module.exports = {
     command: 'pay <amount> <currency> to <recipient>',
     describe: 'Send <amount> of <currency> from your current wallet to the <recipient>\'s wallet',
     builder: {},
     handler: async (argv) => {
+        const {createApiToken} = require('../sdk/identity-model');
+        const {getSupportedTokens} = require('../sdk/tokens-model');
+        const Payment = require('../sdk/payment-model');
+        const config = require('../config');
+
         try {
             const authToken = await createApiToken();
             const tokens = await getSupportedTokens(authToken);
