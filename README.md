@@ -18,18 +18,18 @@ See www.hubii.com for more information.
 
 ## Installation
 
-If you wish to install everything (complete install):
+To install and make the command part of your path:
 
-    npm install -g hubiinetwork/striim-cli
-
-If you only wish to install the necessities (minimal install):
-
-    npm install -g hubiinetwork/striim-cli --only=production
+    npm install -g striim-cli
 
 ## Configuration
 
 To use the *striim* CLI tool you need to first create a configuration in your 
 home folder as `.striim/config.yaml`
+
+Use the `init` command to create a new config file:
+
+    striim init
 
 The `config.yaml` file is a YAML file where you will need to specify the 
 following properties:
@@ -43,7 +43,7 @@ following properties:
 
 The CLI tool will give a warning in the shell if the configuration file is 
 accessible by anyone besides the owner. To keep your wallet and API access 
-secure, make sure only you have access to the config file.
+secure, make sure **only you** have access to the config file.
 
 Example file:
     
@@ -67,6 +67,16 @@ To show the built-in help:
 or to show help for a specific sub-command:
 
     striim <command> --help
+
+### Initialize configuration
+
+This will create a config folder and file if it doesnt already exist:
+
+    striim init
+
+To recreate and discard previous settings add the `--force` flag:
+
+    striim init --force
 
 ### Check configuration
 

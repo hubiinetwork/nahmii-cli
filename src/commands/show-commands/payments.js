@@ -1,19 +1,18 @@
 'use strict';
 
-const cfg = require('../../config');
-const {createApiToken} = require('../../sdk/identity-model');
-const Payment = require('../../sdk/payment-model');
-const request = require('superagent');
-
-const isMyPayment = (payment) => {
-    return payment.sender.addr === cfg.wallet.address || payment.recipient.addr === cfg.wallet.address;
-};
-
 module.exports = {
     command: 'payments',
     describe: 'Show my pending payments',
     builder: {},
     handler: async (argv) => {
+        const config = require('../../config');
+        const {createApiToken} = require('../../sdk/identity-model');
+        const Payment = require('../../sdk/payment-model');
+
+        const isMyPayment = (payment) => {
+            return payment.sender.addr === config.wallet.address || payment.recipient.addr === config.wallet.address;
+        };
+
         try {
             const authToken = await createApiToken();
 

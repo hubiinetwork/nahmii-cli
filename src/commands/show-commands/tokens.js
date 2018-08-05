@@ -1,13 +1,13 @@
 'use strict';
 
-const {createApiToken} = require('../../sdk/identity-model');
-const {getSupportedTokens} = require('../../sdk/tokens-model');
-
 module.exports = {
     command: 'tokens',
     describe: 'Show tokens supported by striim',
     builder: {},
     handler: async (argv) => {
+        const {createApiToken} = require('../../sdk/identity-model');
+        const {getSupportedTokens} = require('../../sdk/tokens-model');
+
         try {
             const authToken = await createApiToken();
             const supportedTokens = await getSupportedTokens(authToken);
