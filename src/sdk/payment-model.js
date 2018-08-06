@@ -3,6 +3,7 @@
 const request = require('superagent');
 const config = require('../config');
 const {hash, sign} = require('./utils');
+const striim = require('./striim-request');
 
 const _amount = new WeakMap();
 const _currency = new WeakMap();
@@ -17,6 +18,22 @@ class Payment {
         _currency.set(this, currency);
         _sender.set(this, sender);
         _recipient.set(this, recipient);
+    }
+
+    get amount() {
+        return _amount.get(this);
+    }
+
+    get currency() {
+        return _currency.get(this);
+    }
+
+    get sender() {
+        return _sender.get(this);
+    }
+
+    get recipient() {
+        return _recipient.get(this);
     }
 
     sign(privateKey) {
@@ -62,10 +79,11 @@ class Payment {
     }
 
     static getPendingPayments(authToken) {
-        return request
-            .get(`https://${config.apiRoot}/trading/payments`)
-            .set('authorization', `Bearer ${authToken}`)
-            .then(res => res.body);
+        return striim
+            .get('/trading/payments', authToken)
+            .then(payments => {
+                return payments.map(p => Payment.from(p));
+            });
     }
 
     static registerPayment(authToken, payment) {

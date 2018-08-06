@@ -1,8 +1,8 @@
 'use strict';
 
 module.exports = {
-    command: 'show <resource>',
-    describe: 'Show all available resources of type <resource>',
+    command: 'show <balance|payments|receipts|tokens>',
+    describe: 'Display information about specified resource',
     builder: yargs => {
         return yargs
             .commandDir('./show-commands', {exclude: /.*.spec.js$/})

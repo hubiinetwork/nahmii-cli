@@ -1,13 +1,9 @@
 'use strict';
 
-const request = require('superagent');
-const config = require('../config');
+const striim = require('./striim-request');
 
-function getSupportedTokens(token) {
-    return request
-        .get(`https://${config.apiRoot}/ethereum/supported-tokens`)
-        .set('authorization', `Bearer ${token}`)
-        .then(res => res.body);
+function getSupportedTokens(authToken) {
+    return striim.get('/ethereum/supported-tokens', authToken);
 }
 
 module.exports = {getSupportedTokens};

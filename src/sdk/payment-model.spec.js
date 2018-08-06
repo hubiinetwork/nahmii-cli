@@ -40,10 +40,12 @@ describe('Payment', () => {
         }
     };
     let Payment;
+    const stubbedStriimGet = sinon.stub();
 
     beforeEach(() => {
         Payment = proxyquire('./payment-model', {
-            '../config': fakeConfig
+            '../config': fakeConfig,
+            './striim-request': {get: stubbedStriimGet}
         });
     });
 
@@ -75,6 +77,22 @@ describe('Payment', () => {
             payment.register('api-token');
             expect(scope.isDone()).to.eql(true);
         });
+
+        it('has the supplied amount', () => {
+            expect(payment.amount).to.eql(amount);
+        });
+
+        it('has the supplied currency', () => {
+            expect(payment.currency).to.eql(currency);
+        });
+
+        it('has the supplied sender', () => {
+            expect(payment.sender).to.eql(sender);
+        });
+
+        it('has the supplied recipient', () => {
+            expect(payment.recipient).to.eql(recipient);
+        });
     });
 
     context('a signed Payment', () => {
@@ -96,6 +114,22 @@ describe('Payment', () => {
 
             payment.register('api-token');
             expect(scope.isDone()).to.eql(true);
+        });
+
+        it('has the supplied amount', () => {
+            expect(payment.amount).to.eql(amount);
+        });
+
+        it('has the supplied currency', () => {
+            expect(payment.currency).to.eql(currency);
+        });
+
+        it('has the supplied sender', () => {
+            expect(payment.sender).to.eql(sender);
+        });
+
+        it('has the supplied recipient', () => {
+            expect(payment.recipient).to.eql(recipient);
         });
     });
 
@@ -123,6 +157,22 @@ describe('Payment', () => {
             payment.register('api-token');
             expect(scope.isDone()).to.eql(true);
         });
+
+        it('has the supplied amount', () => {
+            expect(payment.amount).to.eql(amount);
+        });
+
+        it('has the supplied currency', () => {
+            expect(payment.currency).to.eql(currency);
+        });
+
+        it('has the supplied sender', () => {
+            expect(payment.sender).to.eql(sender);
+        });
+
+        it('has the supplied recipient', () => {
+            expect(payment.recipient).to.eql(recipient);
+        });
     });
 
     context('a de-serialized signed Payment', () => {
@@ -143,6 +193,53 @@ describe('Payment', () => {
 
             payment.register('api-token');
             expect(scope.isDone()).to.eql(true);
+        });
+
+        it('has the supplied amount', () => {
+            expect(payment.amount).to.eql(amount);
+        });
+
+        it('has the supplied currency', () => {
+            expect(payment.currency).to.eql(currency);
+        });
+
+        it('has the supplied sender', () => {
+            expect(payment.sender).to.eql(sender);
+        });
+
+        it('has the supplied recipient', () => {
+            expect(payment.recipient).to.eql(recipient);
+        });
+    });
+
+    context('a pending signed Payment from the server', () => {
+        let payment;
+
+        beforeEach(async () => {
+            stubbedStriimGet
+                .withArgs('/trading/payments', 'api-token')
+                .resolves([signedPayload]);
+            [payment] = await Payment.getPendingPayments('api-token');
+        });
+
+        it('can be serialized to a new object literal', () => {
+            expect(payment.toJSON()).to.eql(signedPayload);
+        });
+
+        it('has the supplied amount', () => {
+            expect(payment.amount).to.eql(amount);
+        });
+
+        it('has the supplied currency', () => {
+            expect(payment.currency).to.eql(currency);
+        });
+
+        it('has the supplied sender', () => {
+            expect(payment.sender).to.eql(sender);
+        });
+
+        it('has the supplied recipient', () => {
+            expect(payment.recipient).to.eql(recipient);
         });
     });
 });

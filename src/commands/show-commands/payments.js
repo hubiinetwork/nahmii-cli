@@ -10,7 +10,7 @@ module.exports = {
         const Payment = require('../../sdk/payment-model');
 
         const isMyPayment = (payment) => {
-            return payment.sender.addr === config.wallet.address || payment.recipient.addr === config.wallet.address;
+            return payment.sender === config.wallet.address || payment.recipient === config.wallet.address;
         };
 
         try {

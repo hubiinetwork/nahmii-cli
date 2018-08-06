@@ -1,13 +1,9 @@
 'use strict';
 
-const request = require('superagent');
-const config = require('../config');
+const striim = require('./striim-request');
 
-function getAllReceipts(token) {
-    return request
-        .get(`https://${config.apiRoot}/trading/receipts`)
-        .set('authorization', `Bearer ${token}`)
-        .then(res => res.body);
+function getAllReceipts(authToken) {
+    return striim.get('/trading/receipts', authToken);
 }
 
 module.exports = {getAllReceipts};

@@ -2,19 +2,27 @@
 
 ## About the CLI
 
-This is a command line interface that aims to make usage of the Striim APIs as
+This is a command line interface that aims to make usage of the _hubii striim_ APIs as
 easy and convenient as possible, while maintaining the flexibility of the 
 platform.
 
-## About Striim
+## About striim
 
-Striim is Hubii's scaling solution for the Ethereum block chain. It is a 
+_striim_ is _hubii_'s scaling solution for the Ethereum block chain. It is a
 hybrid centralized/decentralized solution that enables instant 
 (micro-) payments, trading and trustless settlements.
 
-## About Hubii
+## About hubii
 
 See www.hubii.com for more information.
+
+## Prerequisites
+
+* To use this software you need a modern version of **NodeJS and NPM**.
+  We recommend having the current LTS version (v8.x) installed, or
+  later, and updating NPM to the latest available version.
+* You will also need an **API key** for access to _hubii_'s APIs.
+* An ethereum wallet stored as an **UTC file**, and is's **passphrase**.
 
 ## Installation
 
@@ -24,7 +32,7 @@ To install and make the command part of your path:
 
 ## Configuration
 
-To use the *striim* CLI tool you need to first create a configuration in your 
+To use the _striim_ CLI tool you need to first create a configuration in your
 home folder as `.striim/config.yaml`
 
 Use the `init` command to create a new config file:
@@ -34,8 +42,8 @@ Use the `init` command to create a new config file:
 The `config.yaml` file is a YAML file where you will need to specify the 
 following properties:
 
-- apiRoot - The root domain for Hubii's APIs.
-- appId - The application ID created in Hubii's identity server.
+- apiRoot - The root domain for _hubii_'s APIs.
+- appId - The application ID created in _hubii_'s identity server.
 - appSecret - The matching secret for the application ID.
 - wallet:
     - address - The address of your wallet.
@@ -82,30 +90,39 @@ To recreate and discard previous settings add the `--force` flag:
 
     striim configuration
 
+### Show balance
+
+Shows your balance in _hubii striim_:
+
+    striim show balance
+
+Results are printed as JSON. It is recommended to pipe the result
+through `jq` to get a pretty output in the shell.
+
 ### Make a payment
 
     striim pay 100 TT1 to 0a24740dcb4ba8fb8469ef4cfe22eeedcf069076
 
-Results are printed as JSON. It is recommended to pipe the result through `jq` 
-to get a pretty output in the shell.
+Results are printed as JSON. It is recommended to pipe the result
+through `jq` to get a pretty output in the shell.
 
 ### Show pending payments
 
     striim show payments
 
-Results are printed as JSON. It is recommended to pipe the result through `jq` 
-to get a pretty output in the shell.
+Results are printed as JSON. It is recommended to pipe the result
+through `jq` to get a pretty output in the shell.
     
 ### Show executed payments
 
     striim show receipts
 
-Results are printed as JSON. It is recommended to pipe the result through `jq` 
-to get a pretty output in the shell.
+Results are printed as JSON. It is recommended to pipe the result
+through `jq` to get a pretty output in the shell.
 
 ### Get a list of supported currencies
 
     striim show tokens
 
-Results are printed as JSON. It is recommended to pipe the result through `jq` 
-to get a pretty output in the shell.
+Results are printed as JSON. It is recommended to pipe the result
+through `jq` to get a pretty output in the shell.
