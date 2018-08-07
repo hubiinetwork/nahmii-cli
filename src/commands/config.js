@@ -1,5 +1,7 @@
 'use strict';
 
+const Web3Eth = require('web3-eth');
+
 module.exports = {
     command: 'config',
     describe: 'Does some simple checks on the current configuration and displays the essentials.',
@@ -21,6 +23,17 @@ module.exports = {
         }
         catch (err) {
             throw new Error('Unable to authenticate using current configuration.');
+        }
+
+        try {
+            let eth = new Web3Eth(config.ethereum.node);
+            let connected = await eth.net.isListening();
+            console.log('Successfully connected to Ethereum network!');
+        }
+        catch (err) {
+            if (env.LOG_LEVEL === 'debug')
+                throw new Error('Unable to connect to Ethereum network.', err);
+            throw new Error('Unable to connect to Ethereum network.');
         }
     }
 };
