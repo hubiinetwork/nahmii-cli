@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "ethereumjs-util": "^5.2.0",
+    "ethers": "^3.0.26",
     "keythereum": "^1.0.4",
     "node-yaml": "^3.1.1",
     "readline-sync": "^1.4.9",
