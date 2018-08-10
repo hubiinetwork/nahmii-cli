@@ -17,27 +17,26 @@ function dbg(...args) {
 
 Promise.retry = function(attemptFn, times, delay) {
     return new Promise(function(resolve, reject) {
-        var error;
-        var attempt = function() {
-            if (times == 0) {
-                reject(error);
-            }
-            else {
-                attemptFn()
-                    .then(resolve)
-                    .catch(function(e) {
-                        times--;
-                        error = e;
-                        setTimeout(function() {
-                            attempt()
-                        }, delay);
-                    });
-            }
-        };
+        let error;
+
+        function attempt() {
+            if (!times)
+                return reject(error);
+
+            attemptFn()
+                .then(resolve)
+                .catch(function(e) {
+                    times--;
+                    error = e;
+                    setTimeout(function() {
+                        attempt()
+                    }, delay);
+                });
+        }
+
         attempt();
     });
 };
-
 
 function isNotNull(promise) {
     return new Promise((resolve, reject) => {
@@ -53,13 +52,13 @@ function isNotNull(promise) {
 
 module.exports = {
     command: 'deposit <amount> <currency> [--gas=<gaslimit>]',
-    describe: 'Deposits <amount> of Ether (or any supported token) into your striim account.',
+    describe: 'Deposits <amount> of ETH (or any supported token) into your striim account.',
     builder: yargs => {
         yargs.example('deposit 1 ETH', 'Deposits 1 Ether using default gas limit.');
-        yargs.example('deposit 1 ETH --gas=200000', 'Deposits 1 Ether and sets the gas limit to 200000.');
+        yargs.example('deposit 1 ETH --gas=500000', 'Deposits 1 Ether and sets the gas limit to 500000.');
         yargs.example('deposit 1000 HBT', 'Deposits 1000 Hubiits (HBT) using default gas limit.');
         yargs.option('gas', {
-            desc: 'Gas limit',
+            desc: 'Gas limit used _per transaction_. Deposits can be 1 or more transactions depending on the type of currency.',
             default: 250000,
             type: 'number'
         });
@@ -136,7 +135,7 @@ module.exports = {
                 }, 60, 1000);
                 dbg('ApproveTX (receipt): ' + JSON.stringify(approvalTxReceipt));
             }
-            catch(err) {
+            catch (err) {
                 dbg(err);
                 throw new Error('Failed to approve ERC20 token payment in time!')
             }
@@ -155,7 +154,7 @@ module.exports = {
                 }, 60, 1000);
                 dbg('DepositTX (receipt): ' + JSON.stringify(depositTxReceipt));
             }
-            catch(err) {
+            catch (err) {
                 dbg(err);
                 throw new Error('Failed to deposit token in time!')
             }
