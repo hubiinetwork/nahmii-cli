@@ -1,7 +1,7 @@
 'use strict';
 
 const ethers = require('ethers');
-const clientFundDeployment = require('../abis/ClientFund');
+const clientFundDeployment = require('./abis/ClientFund');
 
 class ClientFundContract extends ethers.Contract {
     constructor(walletOrProvider) {

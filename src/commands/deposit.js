@@ -1,54 +1,7 @@
 'use strict';
 
-const web3utils = require('web3-utils');
-const Web3Eth = require('web3-eth');
 const ethers = require('ethers');
 const {prefix0x} = require('../sdk/utils');
-
-let isProviderConnected = async function(provider) {
-    await provider.getBlockNumber();
-    return true;
-};
-
-function dbg(...args) {
-    if (process.env.LOG_LEVEL === 'debug')
-        console.error(...args);
-}
-
-Promise.retry = function(attemptFn, times, delay) {
-    return new Promise(function(resolve, reject) {
-        let error;
-
-        function attempt() {
-            if (!times)
-                return reject(error);
-
-            attemptFn()
-                .then(resolve)
-                .catch(function(e) {
-                    times--;
-                    error = e;
-                    setTimeout(function() {
-                        attempt()
-                    }, delay);
-                });
-        }
-
-        attempt();
-    });
-};
-
-function isNotNull(promise) {
-    return new Promise((resolve, reject) => {
-        promise.then(res => {
-            if (res !== null)
-                resolve(res);
-            else
-                reject();
-        })
-    });
-}
-
 
 module.exports = {
     command: 'deposit <amount> <currency> [--gas=<gaslimit>]',
@@ -64,8 +17,9 @@ module.exports = {
         });
     },
     handler: async (argv) => {
-        const {createApiToken} = require('../sdk/identity-model');
         const config = require('../config');
+
+        ensureAmountIsPositiveNumber(argv.amount);
 
         const gasLimit = parseInt(argv.gas);
         if (gasLimit <= 0)
@@ -81,9 +35,9 @@ module.exports = {
 
         let provider;
         if (config.ethereum && config.ethereum.node)
-            provider = ethers.providers.getDefaultProvider(config.ethereum.network);
-        else
             provider = new ethers.providers.JsonRpcProvider(config.ethereum.node, config.ethereum.network);
+        else
+            provider = ethers.providers.getDefaultProvider(config.ethereum.network);
         dbg(JSON.stringify(provider));
 
         try {
@@ -94,82 +48,44 @@ module.exports = {
             throw new Error('Unable to connect to provider!');
         }
 
-        const wallet = new ethers.Wallet(privateKey, provider);
-
-        const ClientFundContract = require('../client-fund-contract');
-        const clientFund = new ClientFundContract(wallet);
+        const Wallet = require('../sdk/wallet');
+        const wallet = new Wallet(privateKey, provider);
 
         if (argv.currency.toUpperCase() === 'ETH') {
-            const amount = ethers.utils.parseEther(argv.amount.toString());
-            dbg('Sending ' + amount + ' wei to ' + clientFund.address + ' from ' + wallet.address);
-
-            const transaction = await wallet.send(clientFund.address, amount, {gasLimit: gasLimit});
-            console.log(JSON.stringify({
-                transaction: transaction,
-                href: 'https://ropsten.etherscan.io/tx/' + transaction.hash
-            }));
+            const receipt = await wallet.depositEth(argv.amount, {gasLimit});
+            console.log(JSON.stringify([reduceReceipt(receipt)]));
         }
         else {
-            const {getSupportedTokens} = require('../sdk/tokens-model');
-            const authToken = await createApiToken();
-            const supportedTokens = await getSupportedTokens(authToken);
-
-            const tokenInfo = supportedTokens.find(t => t.symbol.toUpperCase() === argv.currency.toUpperCase());
-            if (!tokenInfo)
-                throw new Error('Unknown currency. See "striim show tokens" for a list of supported tokens.');
-
-            const amount = ethers.utils.parseUnits(argv.amount.toString(), tokenInfo.decimals);
-            dbg('Sending ' + amount + ' (base units) to ' + clientFund.address + ' from ' + wallet.address);
-
-            const Erc20Contract = require('../erc20-contract');
-            const tokenContract = new Erc20Contract(tokenInfo.currency, wallet);
-
-            try {
-                dbg('Approving transfer...');
-                var approvalTx = await tokenContract.approve(clientFund.address, amount, {gasLimit: gasLimit});
-                dbg('ApproveTX: ' + JSON.stringify(approvalTx));
-
-                var approvalTxReceipt = await Promise.retry(() => {
-                    dbg('.');
-                    return isNotNull(provider.getTransactionReceipt(approvalTx.hash))
-                }, 60, 1000);
-                dbg('ApproveTX (receipt): ' + JSON.stringify(approvalTxReceipt));
-            }
-            catch (err) {
-                dbg(err);
-                throw new Error('Failed to approve ERC20 token payment in time!')
-            }
-
-            if (approvalTxReceipt.status === 0)
-                throw new Error('Approve transaction failed!');
-
-            try {
-                dbg('Depositing to striim...');
-                var depositTx = await clientFund.depositTokens(tokenContract.address, amount, {gasLimit: gasLimit});
-                dbg('DepositTX: ' + JSON.stringify(depositTx));
-
-                var depositTxReceipt = await Promise.retry(() => {
-                    dbg('.');
-                    return isNotNull(provider.getTransactionReceipt(depositTx.hash))
-                }, 60, 1000);
-                dbg('DepositTX (receipt): ' + JSON.stringify(depositTxReceipt));
-            }
-            catch (err) {
-                dbg(err);
-                throw new Error('Failed to deposit token in time!')
-            }
-
-            if (depositTxReceipt.status === 0)
-                throw new Error('Deposit transaction failed!');
-
-            console.log(JSON.stringify({
-                approval: approvalTxReceipt,
-                deposit: depositTxReceipt,
-                href: [
-                    'https://ropsten.etherscan.io/tx/' + approvalTx.hash,
-                    'https://ropsten.etherscan.io/tx/' + depositTx.hash
-                ]
-            }));
+            const {createApiToken} = require('../sdk/identity-model');
+            provider.apiAccessToken = await createApiToken();
+            const receipts = await wallet.depositToken(argv.amount, argv.currency, {gasLimit});
+            console.log(JSON.stringify(receipts.map(reduceReceipt)));
         }
     }
 };
+
+function ensureAmountIsPositiveNumber(amount) {
+    if (typeof amount !== 'number')
+        throw new TypeError('amount must be a number');
+    if (amount <= 0)
+        throw new Error('amount must be greater than zero');
+}
+
+function reduceReceipt(txReceipt) {
+    return {
+        transactionHash: txReceipt.transactionHash,
+        blockNumber: txReceipt.blockNumber,
+        gasUsed: ethers.utils.bigNumberify(txReceipt.gasUsed).toString(),
+        href: `https://ropsten.etherscan.io/tx/${txReceipt.transactionHash}`
+    };
+}
+
+let isProviderConnected = async function(provider) {
+    await provider.getBlockNumber();
+    return true;
+};
+
+function dbg(...args) {
+    if (process.env.LOG_LEVEL === 'debug')
+        console.error(...args);
+}
