@@ -17,10 +17,8 @@ const apiAccessToken = 'hubii-api-token';
 const stubbedProvider = {
     chainId: 3,
     getTransactionReceipt: sinon.stub(),
-    getApiAccessToken: sinon.stub()
-};
-
-const stubbedBalancesModel = {
+    getApiAccessToken: sinon.stub(),
+    getSupportedTokens: sinon.stub(),
     getStriimBalances: sinon.stub()
 };
 
@@ -37,10 +35,6 @@ const testTokens = [
     }
 ];
 
-const stubbedTokensModel = {
-    getSupportedTokens: sinon.stub()
-};
-
 const stubbedClientFundContract = {
     depositTokens: sinon.stub(),
     address: 'client fund address'
@@ -52,8 +46,6 @@ const stubbedErc20Contract = {
 
 function proxyquireWallet() {
     return proxyquire('./wallet', {
-        './balances-model': stubbedBalancesModel,
-        './tokens-model': stubbedTokensModel,
         './client-fund-contract': function() {
             return stubbedClientFundContract;
         },
@@ -70,24 +62,24 @@ describe('Wallet', () => {
 
     beforeEach(() => {
         stubbedProvider.getApiAccessToken.resolves(apiAccessToken);
-        stubbedTokensModel.getSupportedTokens.resolves(testTokens);
+        stubbedProvider.getSupportedTokens.resolves(testTokens);
         const Wallet = proxyquireWallet();
         wallet = new Wallet(privateKey, stubbedProvider);
     });
 
     afterEach(() => {
-        stubbedBalancesModel.getStriimBalances.reset();
-        stubbedTokensModel.getSupportedTokens.reset();
-        stubbedProvider.getTransactionReceipt.reset();
         stubbedErc20Contract.approve.reset();
         stubbedClientFundContract.depositTokens.reset();
+        stubbedProvider.getStriimBalances.reset();
+        stubbedProvider.getSupportedTokens.reset();
+        stubbedProvider.getTransactionReceipt.reset();
         stubbedProvider.getApiAccessToken.reset();
     });
 
     context('an empty wallet', () => {
         beforeEach(() => {
-            stubbedBalancesModel.getStriimBalances
-                .withArgs(apiAccessToken, walletAddress)
+            stubbedProvider.getStriimBalances
+                .withArgs(walletAddress)
                 .resolves([]);
         });
 
@@ -99,8 +91,8 @@ describe('Wallet', () => {
 
     context('a wallet with striim balance', () => {
         beforeEach(() => {
-            stubbedBalancesModel.getStriimBalances
-                .withArgs(apiAccessToken, walletAddress)
+            stubbedProvider.getStriimBalances
+                .withArgs(walletAddress)
                 .resolves([
                     {
                         wallet: walletAddress,

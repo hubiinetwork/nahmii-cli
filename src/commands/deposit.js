@@ -1,7 +1,6 @@
 'use strict';
 
-const StriimProvider = require('../sdk/striim-provider');
-const Wallet = require('../sdk/wallet');
+const striim = require('../sdk');
 
 
 module.exports = {
@@ -23,7 +22,7 @@ module.exports = {
 
         const config = require('../config');
         const provider = await createProvider(config);
-        const wallet = new Wallet(config.privateKey(config.wallet.secret), provider);
+        const wallet = new striim.Wallet(config.privateKey(config.wallet.secret), provider);
 
         if (argv.currency.toUpperCase() === 'ETH') {
             const receipt = await wallet.depositEth(amount, {gasLimit});
@@ -58,7 +57,7 @@ async function createProvider(config) {
         network = config.ethereum.network;
     dbg('Network: ' + network);
 
-    let provider = new StriimProvider(config.apiRoot, config.appId, config.appSecret, config.ethereum.node, network);
+    let provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret, config.ethereum.node, network);
 
     try {
         await Promise.all([

@@ -1,16 +1,18 @@
 'use strict';
 
+const striim = require('../../sdk');
+
 module.exports = {
     command: 'tokens',
     describe: 'Show tokens supported by striim',
     builder: {},
     handler: async (argv) => {
-        const {createApiToken} = require('../../sdk/identity-model');
-        const {getSupportedTokens} = require('../../sdk/tokens-model');
-
         try {
-            const authToken = await createApiToken();
-            const supportedTokens = await getSupportedTokens(authToken);
+            const config = require('../../config');
+            const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret, config.ethereum.node, config.ethereum.network);
+
+            const authToken = await provider.getApiAccessToken();
+            const supportedTokens = await provider.getSupportedTokens();
 
             if (supportedTokens.length) {
                 const result = JSON.stringify(supportedTokens.map(t => {

@@ -1,7 +1,9 @@
 'use strict';
 
 const ethers = require('ethers');
+const {prefix0x} = require('./utils');
 const {createApiToken} = require('./identity-model');
+const StriimRequest = require('./striim-request');
 
 // Private properties
 const _baseUrl = new WeakMap();
@@ -9,6 +11,7 @@ const _appId = new WeakMap();
 const _appSecret = new WeakMap();
 const _apiAccessToken = new WeakMap();
 const _asyncInitializations = new WeakMap();
+const _striim = new WeakMap();
 
 class StriimProvider extends ethers.providers.JsonRpcProvider {
     constructor(striimBaseUrl, apiAppId, apiAppSecret, node, network) {
@@ -17,6 +20,9 @@ class StriimProvider extends ethers.providers.JsonRpcProvider {
         _baseUrl.set(this, striimBaseUrl);
         _appId.set(this, apiAppId);
         _appSecret.set(this, apiAppSecret);
+        _striim.set(this, new StriimRequest(striimBaseUrl, () => {
+            return this.getApiAccessToken();
+        }));
     }
 
     async getApiAccessToken() {
@@ -31,6 +37,18 @@ class StriimProvider extends ethers.providers.JsonRpcProvider {
             _apiAccessToken.set(this, currentToken);
         }
         return currentToken;
+    }
+
+    getSupportedTokens() {
+        return _striim.get(this).get('/ethereum/supported-tokens');
+    }
+
+    getStriimBalances(address) {
+        return _striim.get(this).get(`/trading/wallets/${prefix0x(address)}/balances`);
+    }
+
+    getPendingPayments() {
+        return _striim.get(this).get('/trading/payments');
     }
 }
 

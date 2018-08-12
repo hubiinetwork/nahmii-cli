@@ -1,8 +1,7 @@
 'use strict';
 
 const ethers = require('ethers');
-const {getStriimBalances} = require('./balances-model');
-const {getSupportedTokens} = require('./tokens-model');
+//const {getStriimBalances} = require('./balances-model');
 const ClientFundContract = require('./client-fund-contract');
 const Erc20Contract = require('./erc20-contract');
 
@@ -21,17 +20,17 @@ class Wallet extends ethers.Wallet {
     async getStriimBalance() {
         const apiAccessToken = await getApiAccessToken.call(this);
         const [striimBalances, supportedTokens] = await Promise.all([
-            getStriimBalances(apiAccessToken, this.address),
-            getSupportedTokens(apiAccessToken)
+            this.provider.getStriimBalances(this.address),
+            this.provider.getSupportedTokens()
         ]);
 
-        const tokens = new Map();
-        tokens.set('0x0000000000000000000000000000000000000000', {
+        const currencies = new Map();
+        currencies.set('0X0000000000000000000000000000000000000000', {
             symbol: 'ETH',
             decimals: 18
         });
         for (let t of supportedTokens) {
-            tokens.set(t.currency, {
+            currencies.set(t.currency.toUpperCase(), {
                 symbol: t.symbol,
                 decimals: t.decimals
             });
@@ -39,8 +38,9 @@ class Wallet extends ethers.Wallet {
 
         const striimBalance = {};
         for (let b of striimBalances) {
-            striimBalance[tokens.get(b.currency).symbol] =
-                ethers.utils.formatUnits(b.amount, tokens.get(b.currency).decimals);
+            const currency = currencies.get(b.currency.toUpperCase());
+            striimBalance[currency.symbol] =
+                ethers.utils.formatUnits(b.amount, currency.decimals);
         }
 
         return striimBalance;
@@ -136,8 +136,7 @@ function getTransactionReceipt(transactionHash) {
  * @returns {Promise<Object>}
  */
 async function getTokenInfo(symbol) {
-    const apiAccessToken = await getApiAccessToken.call(this);
-    const supportedTokens = await getSupportedTokens(apiAccessToken);
+    const supportedTokens = await this.provider.getSupportedTokens();
     const tokenInfo = supportedTokens.find(t => t.symbol.toUpperCase() === symbol.toUpperCase());
     if (!tokenInfo)
         throw new Error('Unknown currency. See "striim show tokens" for a list of supported tokens.');

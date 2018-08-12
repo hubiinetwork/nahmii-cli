@@ -9,10 +9,6 @@ chai.use(sinonChai);
 const proxyquire = require('proxyquire').noPreserveCache().noCallThru();
 const ethers = require('ethers');
 
-const stubbedIdentityModel = {
-    createApiToken: sinon.stub()
-};
-
 const stubbedWallet = {
     depositEth: sinon.stub(),
     depositToken: sinon.stub()
@@ -38,12 +34,13 @@ const stubbedProvider = {
 
 function proxyquireCommand() {
     return proxyquire('./deposit', {
-        '../sdk/striim-provider': stubbedProviderCtr,
-        '../config': stubbedConfig,
-        '../sdk/wallet': function() {
-            return stubbedWallet;
+        '../sdk': {
+            StriimProvider: stubbedProviderCtr,
+            Wallet: function() {
+                return stubbedWallet;
+            }
         },
-        '../sdk/identity-model': stubbedIdentityModel
+        '../config': stubbedConfig
     });
 }
 
@@ -76,7 +73,6 @@ describe('Deposit command', () => {
     });
 
     afterEach(() => {
-        stubbedIdentityModel.createApiToken.reset();
         stubbedWallet.depositEth.reset();
         stubbedWallet.depositToken.reset();
         stubbedConfig.privateKey.reset();

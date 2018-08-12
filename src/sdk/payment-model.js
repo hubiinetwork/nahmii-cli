@@ -98,6 +98,8 @@ class Payment {
                         throw new Error('Insufficient funds!');
                     case 403:
                         throw new Error('Not authorized!');
+                    case 422:
+                        throw new Error(err.response.body.message);
                     default:
                         throw new Error(err);
                 }

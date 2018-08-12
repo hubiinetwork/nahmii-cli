@@ -11,10 +11,6 @@ const proxyquire = require('proxyquire').noPreserveCache().noCallThru();
 const walletID = '0x1234567890123456789012345678901234567890';
 const walletID2 = '0x1234567890123456789012345678901234567891';
 
-const stubbedIdentityModel = {
-    createApiToken: sinon.stub()
-};
-
 const stubbedPayment = sinon.stub();
 
 const testCurrency = {
@@ -30,23 +26,31 @@ const testCurrency = {
     }
 };
 
-const stubbedTokensModel = {
-    getSupportedTokens: sinon.stub()
-};
-
 const stubbedConfig = {
     wallet: {
         address: walletID2,
         secret: 'expected secret'
     },
-    privateKey: sinon.stub()
+    privateKey: sinon.stub(),
+    ethereum: {
+        network: 'testnet',
+        node: 'some ethereum node'
+    }
+};
+
+const stubbedProvider = {
+    getSupportedTokens: sinon.stub(),
+    getApiAccessToken: sinon.stub()
 };
 
 function proxyquireCommand() {
     return proxyquire('./pay', {
-        '../sdk/identity-model': stubbedIdentityModel,
-        '../sdk/tokens-model': stubbedTokensModel,
-        '../sdk/payment-model': stubbedPayment,
+        '../sdk': {
+            StriimProvider: function() {
+                return stubbedProvider;
+            },
+            Payment: stubbedPayment
+        },
         '../sdk/utils': require('../sdk/utils'),
         '../config': stubbedConfig
     });
@@ -57,13 +61,13 @@ describe('Pay command', () => {
 
     beforeEach(() => {
         apiToken = 'the expected api token';
-        stubbedIdentityModel.createApiToken.resolves(apiToken);
+        stubbedProvider.getApiAccessToken.resolves(apiToken);
     });
 
     afterEach(() => {
-        stubbedIdentityModel.createApiToken.reset();
+        stubbedProvider.getApiAccessToken.reset();
+        stubbedProvider.getSupportedTokens.reset();
         stubbedPayment.reset();
-        stubbedTokensModel.getSupportedTokens.reset();
         stubbedConfig.privateKey.reset();
     });
 
@@ -73,7 +77,7 @@ describe('Pay command', () => {
 
         beforeEach(async () => {
             let cmd = proxyquireCommand().handler;
-            stubbedTokensModel.getSupportedTokens.resolves([testCurrency.hbt, testCurrency.wtf]);
+            stubbedProvider.getSupportedTokens.resolves([testCurrency.hbt, testCurrency.wtf]);
             fakePayment = {
                 sign: sinon.stub(),
                 register: sinon.stub()

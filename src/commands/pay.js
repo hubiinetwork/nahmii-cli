@@ -1,20 +1,20 @@
 'use strict';
 
 const {prefix0x} = require('../sdk/utils');
+const striim = require('../sdk');
 
 module.exports = {
     command: 'pay <amount> <currency> to <recipient>',
     describe: 'Send <amount> of <currency> from your current wallet to the <recipient>\'s wallet',
     builder: {},
     handler: async (argv) => {
-        const {createApiToken} = require('../sdk/identity-model');
-        const {getSupportedTokens} = require('../sdk/tokens-model');
-        const Payment = require('../sdk/payment-model');
         const config = require('../config');
 
         try {
-            const authToken = await createApiToken();
-            const tokens = await getSupportedTokens(authToken);
+            const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret, config.ethereum.node, config.ethereum.network);
+
+            const authToken = await provider.getApiAccessToken();
+            const tokens = await provider.getSupportedTokens();
 
             const tokenDefinition = tokens.find(t => t.symbol.toUpperCase() === argv.currency.toUpperCase());
 
@@ -23,7 +23,7 @@ module.exports = {
             const recipient = prefix0x(argv.recipient);
             const sender = prefix0x(config.wallet.address);
 
-            const payment = new Payment(amount, currency, sender, recipient);
+            const payment = new striim.Payment(amount, currency, sender, recipient);
 
             const secret = config.wallet.secret;
             const privateKey = config.privateKey(secret);
