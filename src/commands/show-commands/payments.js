@@ -1,22 +1,22 @@
 'use strict';
 
+const striim = require('../../sdk');
+
 module.exports = {
     command: 'payments',
     describe: 'Show my pending payments',
     builder: {},
     handler: async (argv) => {
         const config = require('../../config');
-        const {createApiToken} = require('../../sdk/identity-model');
-        const Payment = require('../../sdk/payment-model');
+        const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret, config.ethereum.node, config.ethereum.network);
 
         const isMyPayment = (payment) => {
-            return payment.sender === config.wallet.address || payment.recipient === config.wallet.address;
+            return payment.sender.toUpperCase() === config.wallet.address.toUpperCase()
+                || payment.recipient.toUpperCase() === config.wallet.address.toUpperCase();
         };
 
         try {
-            const authToken = await createApiToken();
-
-            let payments = await Payment.getPendingPayments(authToken);
+            let payments = await provider.getPendingPayments();
             if (!payments.length)
                 payments = [];
             payments = payments.filter(isMyPayment);

@@ -13,9 +13,7 @@ module.exports = {
         try {
             const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret, config.ethereum.node, config.ethereum.network);
 
-            const authToken = await provider.getApiAccessToken();
             const tokens = await provider.getSupportedTokens();
-
             const tokenDefinition = tokens.find(t => t.symbol.toUpperCase() === argv.currency.toUpperCase());
 
             const amount = (parseFloat(argv.amount) * 10 ** tokenDefinition.decimals).toString();
@@ -23,13 +21,13 @@ module.exports = {
             const recipient = prefix0x(argv.recipient);
             const sender = prefix0x(config.wallet.address);
 
-            const payment = new striim.Payment(amount, currency, sender, recipient);
+            const payment = new striim.Payment(provider, amount, currency, sender, recipient);
 
             const secret = config.wallet.secret;
             const privateKey = config.privateKey(secret);
             payment.sign(privateKey);
 
-            const response = await payment.register(authToken);
+            const response = await payment.register();
 
             console.debug(JSON.stringify(response));
         }

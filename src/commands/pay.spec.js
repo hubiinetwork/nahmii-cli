@@ -39,8 +39,7 @@ const stubbedConfig = {
 };
 
 const stubbedProvider = {
-    getSupportedTokens: sinon.stub(),
-    getApiAccessToken: sinon.stub()
+    getSupportedTokens: sinon.stub()
 };
 
 function proxyquireCommand() {
@@ -57,15 +56,7 @@ function proxyquireCommand() {
 }
 
 describe('Pay command', () => {
-    let apiToken;
-
-    beforeEach(() => {
-        apiToken = 'the expected api token';
-        stubbedProvider.getApiAccessToken.resolves(apiToken);
-    });
-
     afterEach(() => {
-        stubbedProvider.getApiAccessToken.reset();
         stubbedProvider.getSupportedTokens.reset();
         stubbedPayment.reset();
         stubbedConfig.privateKey.reset();
@@ -84,6 +75,7 @@ describe('Pay command', () => {
             };
             stubbedPayment
                 .withArgs(
+                    stubbedProvider,
                     (1000 * 10 ** testCurrency.hbt.decimals).toString(),
                     testCurrency.hbt.currency,
                     walletID2,
@@ -104,7 +96,7 @@ describe('Pay command', () => {
         });
 
         it('registers payment with API', () => {
-            expect(fakePayment.register).to.have.been.calledWith(apiToken);
+            expect(fakePayment.register).to.have.been.calledOnce;
         });
     });
 });

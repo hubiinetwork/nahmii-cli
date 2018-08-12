@@ -11,9 +11,7 @@ module.exports = {
             const config = require('../../config');
             const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret, config.ethereum.node, config.ethereum.network);
 
-            const authToken = await provider.getApiAccessToken();
             const supportedTokens = await provider.getSupportedTokens();
-
             if (supportedTokens.length) {
                 const result = JSON.stringify(supportedTokens.map(t => {
                     return {

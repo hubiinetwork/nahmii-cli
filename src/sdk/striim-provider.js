@@ -1,5 +1,6 @@
 'use strict';
 
+const request = require('superagent');
 const ethers = require('ethers');
 const {prefix0x} = require('./utils');
 const {createApiToken} = require('./identity-model');
@@ -49,6 +50,32 @@ class StriimProvider extends ethers.providers.JsonRpcProvider {
 
     getPendingPayments() {
         return _striim.get(this).get('/trading/payments');
+    }
+
+    async registerPayment(payment) {
+        const baseUrl = _baseUrl.get(this);
+        const authToken = await this.getApiAccessToken();
+        return request
+            .post(`https://${baseUrl}/trading/payments`)
+            .send(payment)
+            .set('authorization', `Bearer ${authToken}`)
+            .then(res => res.body)
+            .catch(err => {
+                switch (err.status) {
+                    case 402:
+                        throw new Error('Insufficient funds!');
+                    case 403:
+                        throw new Error('Not authorized!');
+                    case 422:
+                        throw new Error(err.response.body.message);
+                    default:
+                        throw new Error(err);
+                }
+            });
+    }
+
+    getAllReceipts() {
+        return _striim.get(this).get('/trading/receipts');
     }
 }
 
