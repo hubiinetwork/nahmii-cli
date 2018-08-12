@@ -1,0 +1,42 @@
+'use strict';
+
+const ethers = require('ethers');
+const {createApiToken} = require('./identity-model');
+
+// Private properties
+const _baseUrl = new WeakMap();
+const _appId = new WeakMap();
+const _appSecret = new WeakMap();
+const _apiAccessToken = new WeakMap();
+const _asyncInitializations = new WeakMap();
+
+class StriimProvider extends ethers.providers.JsonRpcProvider {
+    constructor(striimBaseUrl, apiAppId, apiAppSecret, node, network) {
+        super(node, network);
+
+        _baseUrl.set(this, striimBaseUrl);
+        _appId.set(this, apiAppId);
+        _appSecret.set(this, apiAppSecret);
+    }
+
+    async getApiAccessToken() {
+        let currentToken = _apiAccessToken.get(this);
+        // TODO: schedule an update of a token that is close to expire
+        if (!isValidToken(currentToken)) {
+            const baseUrl = _baseUrl.get(this);
+            const appId = _appId.get(this);
+            const appSecret = _appSecret.get(this);
+
+            currentToken = await createApiToken(baseUrl, appId, appSecret);
+            _apiAccessToken.set(this, currentToken);
+        }
+        return currentToken;
+    }
+}
+
+function isValidToken(currentToken) {
+    // TODO: check JWT.exp also
+    return !!currentToken;
+}
+
+module.exports = StriimProvider;

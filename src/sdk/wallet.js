@@ -19,9 +19,10 @@ class Wallet extends ethers.Wallet {
      * @returns {Promise<Object>} A promise that resolves into a mapping from symbol to human readable amount.
      */
     async getStriimBalance() {
+        const apiAccessToken = await getApiAccessToken.call(this);
         const [striimBalances, supportedTokens] = await Promise.all([
-            getStriimBalances(this.provider.apiAccessToken, this.address),
-            getSupportedTokens(this.provider.apiAccessToken)
+            getStriimBalances(apiAccessToken, this.address),
+            getSupportedTokens(apiAccessToken)
         ]);
 
         const tokens = new Map();
@@ -135,11 +136,21 @@ function getTransactionReceipt(transactionHash) {
  * @returns {Promise<Object>}
  */
 async function getTokenInfo(symbol) {
-    const supportedTokens = await getSupportedTokens(this.provider.apiAccessToken);
+    const apiAccessToken = await getApiAccessToken.call(this);
+    const supportedTokens = await getSupportedTokens(apiAccessToken);
     const tokenInfo = supportedTokens.find(t => t.symbol.toUpperCase() === symbol.toUpperCase());
     if (!tokenInfo)
         throw new Error('Unknown currency. See "striim show tokens" for a list of supported tokens.');
     return tokenInfo;
+}
+
+/**
+ * Private method - invoke bound to instance.
+ * Retrieves the API access token for striim APIs.
+ * @returns {Promise<void>}
+ */
+async function getApiAccessToken() {
+    return this.provider.getApiAccessToken();
 }
 
 Promise.retry = function(attemptFn, times, delay) {

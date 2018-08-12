@@ -12,10 +12,12 @@ const ethers = require('ethers');
 const privateKey = '0x' + '0F'.repeat(32);
 const walletAddress = '0x691A8D05678FC962ff0f2174134379c0051Cb686'; // Derived from privateKey! Not random!
 
+const apiAccessToken = 'hubii-api-token';
+
 const stubbedProvider = {
-    apiAccessToken: 'hubii-api-token',
     chainId: 3,
-    getTransactionReceipt: sinon.stub()
+    getTransactionReceipt: sinon.stub(),
+    getApiAccessToken: sinon.stub()
 };
 
 const stubbedBalancesModel = {
@@ -67,6 +69,7 @@ describe('Wallet', () => {
     let wallet;
 
     beforeEach(() => {
+        stubbedProvider.getApiAccessToken.resolves(apiAccessToken);
         stubbedTokensModel.getSupportedTokens.resolves(testTokens);
         const Wallet = proxyquireWallet();
         wallet = new Wallet(privateKey, stubbedProvider);
@@ -78,12 +81,13 @@ describe('Wallet', () => {
         stubbedProvider.getTransactionReceipt.reset();
         stubbedErc20Contract.approve.reset();
         stubbedClientFundContract.depositTokens.reset();
+        stubbedProvider.getApiAccessToken.reset();
     });
 
     context('an empty wallet', () => {
         beforeEach(() => {
             stubbedBalancesModel.getStriimBalances
-                .withArgs(stubbedProvider.apiAccessToken, walletAddress)
+                .withArgs(apiAccessToken, walletAddress)
                 .resolves([]);
         });
 
@@ -96,7 +100,7 @@ describe('Wallet', () => {
     context('a wallet with striim balance', () => {
         beforeEach(() => {
             stubbedBalancesModel.getStriimBalances
-                .withArgs(stubbedProvider.apiAccessToken, walletAddress)
+                .withArgs(apiAccessToken, walletAddress)
                 .resolves([
                     {
                         wallet: walletAddress,

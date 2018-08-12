@@ -29,22 +29,16 @@ const stubbedConfig = {
     privateKey: sinon.stub()
 };
 
-const stubbedEthers = {
-    providers: {
-        JsonRpcProvider: sinon.stub(),
-        getDefaultProvider: sinon.stub()
-    },
-    utils: ethers.utils
-};
+const stubbedProviderCtr = sinon.stub();
 
 const stubbedProvider = {
-    getBlockNumber: sinon.stub()
+    getBlockNumber: sinon.stub(),
+    getApiAccessToken: sinon.stub()
 };
 
 function proxyquireCommand() {
     return proxyquire('./deposit', {
-        'ethers': stubbedEthers,
-//        '../sdk/utils': ,
+        '../sdk/striim-provider': stubbedProviderCtr,
         '../config': stubbedConfig,
         '../sdk/wallet': function() {
             return stubbedWallet;
@@ -70,13 +64,11 @@ describe('Deposit command', () => {
         stubbedConfig.privateKey
             .withArgs(stubbedConfig.wallet.secret)
             .returns('privatekey');
-        stubbedEthers.providers.JsonRpcProvider
-            .withArgs(stubbedConfig.ethereum.node, stubbedConfig.ethereum.network)
-            .returns(stubbedProvider);
-        stubbedEthers.providers.getDefaultProvider
-            .withArgs(stubbedConfig.ethereum.network)
+        stubbedProviderCtr
+            .withArgs(stubbedConfig.apiRoot, stubbedConfig.appId, stubbedConfig.appSecret, stubbedConfig.ethereum.node, stubbedConfig.ethereum.network)
             .returns(stubbedProvider);
         stubbedProvider.getBlockNumber.resolves(1);
+        stubbedProvider.getApiAccessToken.resolves('striim JWT');
         sinon.stub(console, 'log');
         depositCmd = proxyquireCommand();
         stubbedWallet.depositEth.resolves(txReceipt1);
@@ -88,9 +80,9 @@ describe('Deposit command', () => {
         stubbedWallet.depositEth.reset();
         stubbedWallet.depositToken.reset();
         stubbedConfig.privateKey.reset();
-        stubbedEthers.providers.JsonRpcProvider.reset();
-        stubbedEthers.providers.getDefaultProvider.reset();
+        stubbedProviderCtr.reset();
         stubbedProvider.getBlockNumber.reset();
+        stubbedProvider.getApiAccessToken.reset();
         console.log.restore();
     });
 

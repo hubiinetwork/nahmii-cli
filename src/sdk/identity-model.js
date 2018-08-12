@@ -3,12 +3,16 @@
 const request = require('superagent');
 const config = require('../config');
 
-function createApiToken() {
+function createApiToken(baseUrl, appId, appSecret) {
+    baseUrl = baseUrl || config.apiRoot;
+    appId = appId || config.appId;
+    appSecret = appSecret || config.appSecret;
+
     return request
-        .post(`https://${config.apiRoot}/identity/apptoken`)
+        .post(`https://${baseUrl}/identity/apptoken`)
         .send({
-            'appid': config.appId,
-            'secret': config.appSecret
+            'appid': appId,
+            'secret': appSecret
         })
         .then(res => res.body.userToken);
 }

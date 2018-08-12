@@ -1,7 +1,8 @@
 'use strict';
 
-const ethers = require('ethers');
-const {prefix0x} = require('../sdk/utils');
+const StriimProvider = require('../sdk/striim-provider');
+const Wallet = require('../sdk/wallet');
+
 
 module.exports = {
     command: 'deposit <amount> <currency> [--gas=<gaslimit>]',
@@ -17,61 +18,64 @@ module.exports = {
         });
     },
     handler: async (argv) => {
+        const amount = validateAmountIsPositiveDecimalNumber(argv.amount);
+        const gasLimit = validateGasLimitIsPositiveInteger(argv.gas);
+
         const config = require('../config');
-
-        ensureAmountIsPositiveNumber(argv.amount);
-
-        const gasLimit = parseInt(argv.gas);
-        if (gasLimit <= 0)
-            throw new Error('Gas limit must be a number higher than 0');
-
-        const secret = config.wallet.secret;
-        const privateKey = prefix0x(config.privateKey(secret));
-
-        let network = 'homestead';
-        if (config.ethereum && config.ethereum.node)
-            network = config.ethereum.node;
-        dbg('Network: ' + network);
-
-        let provider;
-        if (config.ethereum && config.ethereum.node)
-            provider = new ethers.providers.JsonRpcProvider(config.ethereum.node, config.ethereum.network);
-        else
-            provider = ethers.providers.getDefaultProvider(config.ethereum.network);
-        dbg(JSON.stringify(provider));
-
-        try {
-            await isProviderConnected(provider);
-        }
-        catch (err) {
-            dbg(err);
-            throw new Error('Unable to connect to provider!');
-        }
-
-        const Wallet = require('../sdk/wallet');
-        const wallet = new Wallet(privateKey, provider);
+        const provider = await createProvider(config);
+        const wallet = new Wallet(config.privateKey(config.wallet.secret), provider);
 
         if (argv.currency.toUpperCase() === 'ETH') {
-            const receipt = await wallet.depositEth(argv.amount, {gasLimit});
+            const receipt = await wallet.depositEth(amount, {gasLimit});
             console.log(JSON.stringify([reduceReceipt(receipt)]));
         }
         else {
-            const {createApiToken} = require('../sdk/identity-model');
-            provider.apiAccessToken = await createApiToken();
             const receipts = await wallet.depositToken(argv.amount, argv.currency, {gasLimit});
             console.log(JSON.stringify(receipts.map(reduceReceipt)));
         }
     }
 };
 
-function ensureAmountIsPositiveNumber(amount) {
+function validateAmountIsPositiveDecimalNumber(amount) {
     if (typeof amount !== 'number')
         throw new TypeError('amount must be a number');
     if (amount <= 0)
         throw new Error('amount must be greater than zero');
+
+    return amount;
+}
+
+let validateGasLimitIsPositiveInteger = function(gas) {
+    const gasLimit = parseInt(gas);
+    if (gasLimit <= 0)
+        throw new Error('Gas limit must be a number higher than 0');
+    return gasLimit;
+};
+
+async function createProvider(config) {
+    let network = 'homestead';
+    if (config.ethereum && config.ethereum.network)
+        network = config.ethereum.network;
+    dbg('Network: ' + network);
+
+    let provider = new StriimProvider(config.apiRoot, config.appId, config.appSecret, config.ethereum.node, network);
+
+    try {
+        await Promise.all([
+            provider.getBlockNumber(),
+            provider.getApiAccessToken()
+        ]);
+    }
+    catch (err) {
+        dbg(err);
+        throw new Error('Unable to connect to network!');
+    }
+    return provider;
 }
 
 function reduceReceipt(txReceipt) {
+    const ethers = require('ethers');
+
     return {
         transactionHash: txReceipt.transactionHash,
         blockNumber: txReceipt.blockNumber,
@@ -79,11 +83,6 @@ function reduceReceipt(txReceipt) {
         href: `https://ropsten.etherscan.io/tx/${txReceipt.transactionHash}`
     };
 }
-
-let isProviderConnected = async function(provider) {
-    await provider.getBlockNumber();
-    return true;
-};
 
 function dbg(...args) {
     if (process.env.LOG_LEVEL === 'debug')
