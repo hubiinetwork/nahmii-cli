@@ -8,7 +8,7 @@ module.exports = {
     builder: {},
     handler: async (argv) => {
         const config = require('../../config');
-        const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret, config.ethereum.node, config.ethereum.network);
+        const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
 
         try {
             let wallet = new striim.Wallet(config.privateKey(config.wallet.secret), provider);

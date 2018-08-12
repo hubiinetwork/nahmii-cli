@@ -15,7 +15,7 @@ module.exports = {
         };
 
         try {
-            const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret, config.ethereum.node, config.ethereum.network);
+            const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
 
             let receipts = await provider.getAllReceipts();
             if (!receipts.length)

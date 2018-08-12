@@ -52,12 +52,7 @@ let validateGasLimitIsPositiveInteger = function(gas) {
 };
 
 async function createProvider(config) {
-    let network = 'homestead';
-    if (config.ethereum && config.ethereum.network)
-        network = config.ethereum.network;
-    dbg('Network: ' + network);
-
-    let provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret, config.ethereum.node, network);
+    let provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
 
     try {
         await Promise.all([

@@ -9,7 +9,7 @@ module.exports = {
     handler: async (argv) => {
         try {
             const config = require('../../config');
-            const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret, config.ethereum.node, config.ethereum.network);
+            const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
 
             const supportedTokens = await provider.getSupportedTokens();
             if (supportedTokens.length) {

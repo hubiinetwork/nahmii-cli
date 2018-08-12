@@ -8,7 +8,7 @@ module.exports = {
     builder: {},
     handler: async (argv) => {
         const config = require('../../config');
-        const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret, config.ethereum.node, config.ethereum.network);
+        const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
 
         const isMyPayment = (payment) => {
             return payment.sender.toUpperCase() === config.wallet.address.toUpperCase()

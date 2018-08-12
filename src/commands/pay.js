@@ -11,7 +11,7 @@ module.exports = {
         const config = require('../config');
 
         try {
-            const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret, config.ethereum.node, config.ethereum.network);
+            const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
 
             const tokens = await provider.getSupportedTokens();
             const tokenDefinition = tokens.find(t => t.symbol.toUpperCase() === argv.currency.toUpperCase());

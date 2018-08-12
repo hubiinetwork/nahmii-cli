@@ -15,8 +15,9 @@ const _asyncInitializations = new WeakMap();
 const _striim = new WeakMap();
 
 class StriimProvider extends ethers.providers.JsonRpcProvider {
-    constructor(striimBaseUrl, apiAppId, apiAppSecret, node, network) {
-        super(node, network);
+    constructor(striimBaseUrl, apiAppId, apiAppSecret) {
+        // TODO: make node and network auto-configured from API server
+        super('http://geth-ropsten.dev.hubii.net', 'ropsten');
 
         _baseUrl.set(this, striimBaseUrl);
         _appId.set(this, apiAppId);

@@ -18,10 +18,6 @@ const stubbedConfig = {
     wallet: {
         secret: 'secret much'
     },
-    ethereum: {
-        node: 'such node',
-        network: 'such network'
-    },
     privateKey: sinon.stub()
 };
 
@@ -62,7 +58,7 @@ describe('Deposit command', () => {
             .withArgs(stubbedConfig.wallet.secret)
             .returns('privatekey');
         stubbedProviderCtr
-            .withArgs(stubbedConfig.apiRoot, stubbedConfig.appId, stubbedConfig.appSecret, stubbedConfig.ethereum.node, stubbedConfig.ethereum.network)
+            .withArgs(stubbedConfig.apiRoot, stubbedConfig.appId, stubbedConfig.appSecret)
             .returns(stubbedProvider);
         stubbedProvider.getBlockNumber.resolves(1);
         stubbedProvider.getApiAccessToken.resolves('striim JWT');
