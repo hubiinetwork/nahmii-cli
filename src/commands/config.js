@@ -1,6 +1,6 @@
 'use strict';
 
-const Web3Eth = require('web3-eth');
+const striim = require('../sdk');
 
 module.exports = {
     command: 'config',
@@ -17,23 +17,18 @@ module.exports = {
         console.log(`\twallet address: ${config.wallet.address}`);
         console.log(`\twallet secret: ${'*'.repeat(config.wallet.secret.length ? 20 : 0)}`);
 
-        try {
-            let token = await createApiToken(config.apiRoot, config.appId, config.appSecret);
-            console.log('Successfully authenticated with API servers!');
-        }
-        catch (err) {
-            throw new Error('Unable to authenticate using current configuration.');
-        }
+        const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
 
         try {
-            let eth = new Web3Eth(config.ethereum.node);
-            let connected = await eth.net.isListening();
-            console.log('Successfully connected to Ethereum network!');
+            await Promise.all([
+                provider.getBlockNumber(),
+                provider.getApiAccessToken()
+            ]);
+            console.log('Successfully connected to network!');
         }
         catch (err) {
-            if (env.LOG_LEVEL === 'debug')
-                throw new Error('Unable to connect to Ethereum network.', err);
-            throw new Error('Unable to connect to Ethereum network.');
+            dbg(err);
+            throw new Error('Unable to connect to network! Check your configuration and network connection.');
         }
     }
 };

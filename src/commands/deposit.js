@@ -21,7 +21,7 @@ module.exports = {
         const gasLimit = validateGasLimitIsPositiveInteger(argv.gas);
 
         const config = require('../config');
-        const provider = await createProvider(config);
+        const provider = await new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
         const wallet = new striim.Wallet(config.privateKey(config.wallet.secret), provider);
 
         if (argv.currency.toUpperCase() === 'ETH') {
@@ -50,22 +50,6 @@ let validateGasLimitIsPositiveInteger = function(gas) {
         throw new Error('Gas limit must be a number higher than 0');
     return gasLimit;
 };
-
-async function createProvider(config) {
-    let provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
-
-    try {
-        await Promise.all([
-            provider.getBlockNumber(),
-            provider.getApiAccessToken()
-        ]);
-    }
-    catch (err) {
-        dbg(err);
-        throw new Error('Unable to connect to network!');
-    }
-    return provider;
-}
 
 function reduceReceipt(txReceipt) {
     const ethers = require('ethers');

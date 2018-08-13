@@ -119,7 +119,6 @@ module.exports = Wallet;
  * @returns {Promise<Object>}
  */
 function getTransactionReceipt(transactionHash) {
-    let retries = 0;
     return Promise.retry(() => {
         process.stderr.write('.');
         return deferredIsNotNull(this.provider.getTransactionReceipt(transactionHash))
