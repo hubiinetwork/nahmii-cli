@@ -48,9 +48,9 @@ function proxyquireCommand() {
             StriimProvider: function() {
                 return stubbedProvider;
             },
-            Payment: stubbedPayment
+            Payment: stubbedPayment,
+            utils: require('../sdk/utils')
         },
-        '../sdk/utils': require('../sdk/utils'),
         '../config': stubbedConfig
     });
 }

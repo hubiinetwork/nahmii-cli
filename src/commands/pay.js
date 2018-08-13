@@ -1,7 +1,7 @@
 'use strict';
 
-const {prefix0x} = require('../sdk/utils');
 const striim = require('../sdk');
+const prefix0x = striim.utils.prefix0x;
 
 module.exports = {
     command: 'pay <amount> <currency> to <recipient>',
