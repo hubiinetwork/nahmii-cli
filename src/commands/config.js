@@ -18,7 +18,7 @@ module.exports = {
         console.log(`\twallet secret: ${'*'.repeat(config.wallet.secret.length ? 20 : 0)}`);
 
         try {
-            let token = await createApiToken();
+            let token = await createApiToken(config.apiRoot, config.appId, config.appSecret);
             console.log('Successfully authenticated with API servers!');
         }
         catch (err) {
