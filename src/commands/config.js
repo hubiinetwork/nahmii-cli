@@ -1,5 +1,7 @@
 'use strict';
 
+const striim = require('../sdk');
+
 module.exports = {
     command: 'config',
     describe: 'Does some simple checks on the current configuration and displays the essentials.',
@@ -15,12 +17,18 @@ module.exports = {
         console.log(`\twallet address: ${config.wallet.address}`);
         console.log(`\twallet secret: ${'*'.repeat(config.wallet.secret.length ? 20 : 0)}`);
 
+        const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
+
         try {
-            let token = await createApiToken();
-            console.log('Successfully authenticated with API servers!');
+            await Promise.all([
+                provider.getBlockNumber(),
+                provider.getApiAccessToken()
+            ]);
+            console.log('Successfully connected to network!');
         }
         catch (err) {
-            throw new Error('Unable to authenticate using current configuration.');
+            dbg(err);
+            throw new Error('Unable to connect to network! Check your configuration and network connection.');
         }
     }
 };

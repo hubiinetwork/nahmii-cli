@@ -6,12 +6,10 @@ const sinonChai = require('sinon-chai');
 const expect = chai.expect;
 chai.use(sinonChai);
 
-const proxyquire = require('proxyquire').noPreserveCache().noCallThru();
-const nock = require('nock');
-nock.disableNetConnect();
+const Payment = require('./payment');
 
-const fakeConfig = {
-    apiRoot: 'localhost'
+const stubbedProvider = {
+    registerPayment: sinon.stub()
 };
 
 describe('Payment', () => {
@@ -39,25 +37,12 @@ describe('Payment', () => {
             }
         }
     };
-    let Payment;
-    const stubbedStriimGet = sinon.stub();
-
-    beforeEach(() => {
-        Payment = proxyquire('./payment-model', {
-            '../config': fakeConfig,
-            './striim-request': {get: stubbedStriimGet}
-        });
-    });
-
-    afterEach(() => {
-        nock.cleanAll();
-    });
 
     context('a new Payment', () => {
         let payment;
 
         beforeEach(() => {
-            payment = new Payment(amount, currency, sender, recipient);
+            payment = new Payment(stubbedProvider, amount, currency, sender, recipient);
         });
 
         it('can be serialized to an object literal', () => {
@@ -70,12 +55,8 @@ describe('Payment', () => {
         });
 
         it('can be registered with the API', () => {
-            let scope = nock('https://' + fakeConfig.apiRoot)
-                .post('/trading/payments', unsignedPayload)
-                .reply(201);
-
-            payment.register('api-token');
-            expect(scope.isDone()).to.eql(true);
+            payment.register();
+            expect(stubbedProvider.registerPayment).to.have.been.calledWith(payment.toJSON());
         });
 
         it('has the supplied amount', () => {
@@ -99,7 +80,7 @@ describe('Payment', () => {
         let payment;
 
         beforeEach(() => {
-            payment = new Payment(amount, currency, sender, recipient);
+            payment = new Payment(stubbedProvider, amount, currency, sender, recipient);
             payment.sign(privateKey);
         });
 
@@ -108,12 +89,8 @@ describe('Payment', () => {
         });
 
         it('can be registered with the API', () => {
-            let scope = nock('https://' + fakeConfig.apiRoot)
-                .post('/trading/payments', signedPayload)
-                .reply(201);
-
-            payment.register('api-token');
-            expect(scope.isDone()).to.eql(true);
+            payment.register();
+            expect(stubbedProvider.registerPayment).to.have.been.calledWith(signedPayload);
         });
 
         it('has the supplied amount', () => {
@@ -137,7 +114,7 @@ describe('Payment', () => {
         let payment;
 
         beforeEach(() => {
-            payment = Payment.from(unsignedPayload);
+            payment = Payment.from(stubbedProvider, unsignedPayload);
         });
 
         it('can be serialized to a new object literal', () => {
@@ -150,12 +127,8 @@ describe('Payment', () => {
         });
 
         it('can be registered with the API', () => {
-            let scope = nock('https://' + fakeConfig.apiRoot)
-                .post('/trading/payments', unsignedPayload)
-                .reply(201);
-
-            payment.register('api-token');
-            expect(scope.isDone()).to.eql(true);
+            payment.register();
+            expect(stubbedProvider.registerPayment).to.have.been.calledWith(unsignedPayload);
         });
 
         it('has the supplied amount', () => {
@@ -179,7 +152,7 @@ describe('Payment', () => {
         let payment;
 
         beforeEach(() => {
-            payment = Payment.from(signedPayload);
+            payment = Payment.from(stubbedProvider, signedPayload);
         });
 
         it('can be serialized to a new object literal', () => {
@@ -187,43 +160,8 @@ describe('Payment', () => {
         });
 
         it('can be registered with the API', () => {
-            let scope = nock('https://' + fakeConfig.apiRoot)
-                .post('/trading/payments', signedPayload)
-                .reply(201);
-
-            payment.register('api-token');
-            expect(scope.isDone()).to.eql(true);
-        });
-
-        it('has the supplied amount', () => {
-            expect(payment.amount).to.eql(amount);
-        });
-
-        it('has the supplied currency', () => {
-            expect(payment.currency).to.eql(currency);
-        });
-
-        it('has the supplied sender', () => {
-            expect(payment.sender).to.eql(sender);
-        });
-
-        it('has the supplied recipient', () => {
-            expect(payment.recipient).to.eql(recipient);
-        });
-    });
-
-    context('a pending signed Payment from the server', () => {
-        let payment;
-
-        beforeEach(async () => {
-            stubbedStriimGet
-                .withArgs('/trading/payments', 'api-token')
-                .resolves([signedPayload]);
-            [payment] = await Payment.getPendingPayments('api-token');
-        });
-
-        it('can be serialized to a new object literal', () => {
-            expect(payment.toJSON()).to.eql(signedPayload);
+            payment.register();
+            expect(stubbedProvider.registerPayment).to.have.been.calledWith(signedPayload);
         });
 
         it('has the supplied amount', () => {

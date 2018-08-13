@@ -5,6 +5,7 @@ const fs = require('fs');
 const yaml = require('node-yaml');
 const keythereum = require('keythereum');
 const homedir = require('os').homedir();
+const {prefix0x} = require('./sdk/utils');
 
 const configPath = path.resolve(homedir, '.striim/config.yaml');
 if (!fs.existsSync(configPath)) {
@@ -26,7 +27,7 @@ cfg.file = configPath;
 cfg.privateKey = (secret) => {
 //    console.debug(`Using key '${cfg.wallet.address}' for signing.`);
     const keyObject = keythereum.importFromFile(cfg.wallet.address, path.resolve(homedir, '.striim'));
-    return keythereum.recover(secret, keyObject).toString('hex');
+    return prefix0x(keythereum.recover(secret, keyObject).toString('hex'));
 };
 
 module.exports = cfg;

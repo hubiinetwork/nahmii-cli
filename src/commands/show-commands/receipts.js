@@ -1,22 +1,23 @@
 'use strict';
 
+const striim = require('../../sdk');
+
 module.exports = {
     command: 'receipts',
     describe: 'Show receipts for my executed payments',
     builder: {},
     handler: async (argv) => {
         const config = require('../../config');
-        const {createApiToken} = require('../../sdk/identity-model');
-        const {getAllReceipts} = require('../../sdk/receipts-model');
 
         const isMyReceipt = (receipt) => {
-            return receipt.sender.addr === config.wallet.address || receipt.recipient.addr === config.wallet.address;
+            return receipt.sender.addr.toUpperCase() === config.wallet.address.toUpperCase()
+                || receipt.recipient.addr.toUpperCase() === config.wallet.address.toUpperCase();
         };
 
         try {
-            const authToken = await createApiToken();
+            const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
 
-            let receipts = await getAllReceipts(authToken);
+            let receipts = await provider.getAllReceipts();
             if (!receipts.length)
                 receipts = [];
             receipts = receipts.filter(isMyReceipt);

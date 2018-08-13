@@ -1,20 +1,18 @@
 'use strict';
 
+const striim = require('../../sdk');
+
 module.exports = {
     command: 'balance',
     describe: 'Show my striim assets',
     builder: {},
     handler: async (argv) => {
         const config = require('../../config');
-        const {createApiToken} = require('../../sdk/identity-model');
-        const {getStriimBalances} = require('../../sdk/balances-model');
+        const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
 
         try {
-            const authToken = await createApiToken();
-
-            let balances = await getStriimBalances(authToken, config.wallet.address);
-            if (!balances.length)
-                balances = [];
+            let wallet = new striim.Wallet(config.privateKey(config.wallet.secret), provider);
+            let balances = await wallet.getStriimBalance();
             console.log(JSON.stringify(balances));
         }
         catch (err) {

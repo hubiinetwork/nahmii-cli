@@ -24,17 +24,6 @@ function prefix0x(str) {
 }
 
 /**
- * Make sure the string provided has a / prefix
- * @param str
- * @returns {String} Input prefixed with / if not already present.
- */
-function prefixSlash(str) {
-    if (str.startsWith('/'))
-        return str;
-    return `/${str}`;
-}
-
-/**
  * Removes 0x from the start of the string if present.
  * @param str
  * @returns {String} Input without any 0x prefix.
@@ -61,7 +50,6 @@ function sign(message, privateKey) {
 module.exports = {
     prefix0x,
     strip0x,
-    prefixSlash,
     hash,
     sign
 };
