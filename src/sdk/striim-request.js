@@ -1,9 +1,14 @@
 'use strict';
 
 const request = require('superagent');
-const {prefixSlash} = require('./utils');
 
 const _authProvider = new WeakMap();
+
+function prefixSlash(value) {
+    if (value.toString().startsWith('/'))
+        return value;
+    return '/' + value;
+}
 
 module.exports = class StriimRequest {
     constructor(apiRoot, authProvider) {

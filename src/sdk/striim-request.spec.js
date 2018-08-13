@@ -10,8 +10,13 @@ const proxyquire = require('proxyquire').noPreserveCache().noCallThru();
 const nock = require('nock');
 nock.disableNetConnect();
 
-const {prefixSlash} = require('./utils');
 const StriimRequest = require('./striim-request');
+
+function prefixSlash(value) {
+    if (value.toString().startsWith('/'))
+        return value;
+    return '/' + value;
+}
 
 const fakeConfig = {
     apiRoot: 'some.hubii.server'
