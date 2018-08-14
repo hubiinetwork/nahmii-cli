@@ -31,11 +31,7 @@ const stubbedConfig = {
         address: walletID2,
         secret: 'expected secret'
     },
-    privateKey: sinon.stub(),
-    ethereum: {
-        network: 'testnet',
-        node: 'some ethereum node'
-    }
+    privateKey: sinon.stub()
 };
 
 const stubbedProvider = {
