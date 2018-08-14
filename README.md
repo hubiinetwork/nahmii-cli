@@ -90,6 +90,17 @@ To recreate and discard previous settings add the `--force` flag:
 
     striim configuration
 
+### Deposit funds
+
+Deposit on-chain funds to be available in _hubii striim_:
+
+    striim deposit 1 ETH
+    
+    striim deposit 1 TT1
+
+Results are printed as JSON. It is recommended to pipe the result
+through `jq` to get a pretty output in the shell.
+
 ### Show balance
 
 Shows your balance in _hubii striim_:
