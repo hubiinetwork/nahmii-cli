@@ -11,8 +11,8 @@ module.exports = {
         const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
 
         const isMyPayment = (payment) => {
-            return payment.sender.toUpperCase() === config.wallet.address.toUpperCase()
-                || payment.recipient.toUpperCase() === config.wallet.address.toUpperCase();
+            return payment.sender.addr.toLowerCase() === config.wallet.address.toLowerCase()
+                || payment.recipient.addr.toLowerCase() === config.wallet.address.toLowerCase();
         };
 
         try {
