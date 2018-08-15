@@ -2,6 +2,12 @@
 
 const striim = require('../../sdk');
 
+function isSameAddress(a, b) {
+    a = striim.utils.strip0x(a).toLowerCase();
+    b = striim.utils.strip0x(b).toLowerCase();
+    return a === b;
+}
+
 module.exports = {
     command: 'payments',
     describe: 'Show my pending payments',
@@ -11,8 +17,8 @@ module.exports = {
         const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
 
         const isMyPayment = (payment) => {
-            return payment.sender.addr.toLowerCase() === config.wallet.address.toLowerCase()
-                || payment.recipient.addr.toLowerCase() === config.wallet.address.toLowerCase();
+            return isSameAddress(payment.sender.addr, config.wallet.address)
+                || isSameAddress(payment.recipient.addr, config.wallet.address);
         };
 
         try {
