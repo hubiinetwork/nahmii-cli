@@ -1,13 +1,12 @@
 'use strict';
 
-const striim = require('../sdk');
+const striim = require('striim-sdk');
 
 module.exports = {
     command: 'config',
     describe: 'Does some simple checks on the current configuration and displays the essentials.',
     builder: {},
     handler: async (argv) => {
-        const {createApiToken} = require('../sdk/identity-model');
         const config = require('../config');
 
         console.log(`Using configuration from ${config.file}:`);

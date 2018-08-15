@@ -1,8 +1,7 @@
 'use strict';
 
-const striim = require('../sdk');
+const striim = require('striim-sdk');
 const ethers = require('ethers');
-
 
 module.exports = {
     command: 'deposit <amount> <currency> [--gas=<gaslimit>]',

@@ -4,7 +4,7 @@
   "description": "CLI interface for using the Hubii Striim APIs",
   "main": "index.js",
   "scripts": {
-    "test": "nyc mocha src/**/*.spec.js"
+    "test": "nyc mocha \"src/**/*.spec.js\""
   },
   "repository": {
     "type": "git",
@@ -14,7 +14,6 @@
     "hubii",
     "striim",
     "cli",
-    "sdk",
     "api",
     "micropayments",
     "trading",
@@ -23,7 +22,7 @@
     "layer2"
   ],
   "author": "Morten Fjeldstad <morten@hubii.com>",
-  "license": "SEE LICENSE FILE",
+  "license": "GPL-3.0",
   "bugs": {
     "url": "https://github.com/hubiinetwork/striim-cli/issues"
   },
@@ -32,13 +31,12 @@
     "striim": "src/main.js"
   },
   "dependencies": {
-    "ethereumjs-util": "^5.2.0",
     "ethers": "^3.0.26",
     "keythereum": "^1.0.4",
     "node-yaml": "^3.1.1",
     "readline-sync": "^1.4.9",
+    "striim-sdk": "^1.0.0",
     "superagent": "^3.8.3",
-    "web3-eth": "^1.0.0-beta.35",
     "web3-utils": "^1.0.0-beta.35",
     "yargs": "^12.0.1"
   },

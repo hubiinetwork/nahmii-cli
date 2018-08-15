@@ -1,6 +1,6 @@
 'use strict';
 
-const striim = require('../../sdk');
+const striim = require('striim-sdk');
 
 function isSameAddress(a, b) {
     a = striim.utils.strip0x(a).toLowerCase();

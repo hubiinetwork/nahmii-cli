@@ -5,7 +5,7 @@ const fs = require('fs');
 const yaml = require('node-yaml');
 const keythereum = require('keythereum');
 const homedir = require('os').homedir();
-const {prefix0x} = require('./sdk/utils');
+const {prefix0x} = require('striim-sdk').utils;
 
 const configPath = path.resolve(homedir, '.striim/config.yaml');
 if (!fs.existsSync(configPath)) {
