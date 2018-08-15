@@ -29,16 +29,19 @@ module.exports = {
             payment.sign(privateKey);
 
             const response = await payment.register();
-
-            console.debug(JSON.stringify(response));
+            console.log(JSON.stringify(response));
         }
         catch (err) {
-            if (process.env.LOG_LEVEL === 'debug')
-                console.error(err);
+            dbg(err);
             throw new Error(`Payment failed: ${err.message}`);
         }
     }
 };
+
+function dbg(...args) {
+    if (process.env.LOG_LEVEL === 'debug')
+        console.error(...args);
+}
 
 async function getCurrencyBySymbol(provider, symbol) {
     if (symbol.toUpperCase() === 'ETH') {

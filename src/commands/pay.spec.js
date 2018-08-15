@@ -52,23 +52,31 @@ function proxyquireCommand() {
 }
 
 describe('Pay command', () => {
+    const registeredPayment = {expected: 'payment registration'};
+    let fakePayment;
+
+    beforeEach(() => {
+        sinon.stub(console, 'log');
+        fakePayment = {
+            sign: sinon.stub(),
+            register: sinon.stub()
+        };
+        fakePayment.register.resolves(registeredPayment);
+    });
+
     afterEach(() => {
         stubbedProvider.getSupportedTokens.reset();
         stubbedPayment.reset();
         stubbedConfig.privateKey.reset();
+        console.log.restore();
     });
 
     context(`pay 1000 HBT to ${walletID}`, () => {
         const expectedPrivateKey = 'a private key';
-        let fakePayment;
 
         beforeEach(async () => {
             let cmd = proxyquireCommand().handler;
             stubbedProvider.getSupportedTokens.resolves([testCurrency.hbt, testCurrency.wtf]);
-            fakePayment = {
-                sign: sinon.stub(),
-                register: sinon.stub()
-            };
             stubbedPayment
                 .withArgs(
                     stubbedProvider,
@@ -94,18 +102,17 @@ describe('Pay command', () => {
         it('registers payment with API', () => {
             expect(fakePayment.register).to.have.been.calledOnce;
         });
+
+        it('outputs an single receipt to stdout', () => {
+            expect(console.log).to.have.been.calledWith(JSON.stringify(registeredPayment));
+        });
     });
 
     context(`pay 1.1 ETH to ${walletID}`, () => {
         const expectedPrivateKey = 'a private key';
-        let fakePayment;
 
         beforeEach(async () => {
             let cmd = proxyquireCommand().handler;
-            fakePayment = {
-                sign: sinon.stub(),
-                register: sinon.stub()
-            };
             stubbedPayment
                 .withArgs(
                     stubbedProvider,
@@ -130,6 +137,10 @@ describe('Pay command', () => {
 
         it('registers payment with API', () => {
             expect(fakePayment.register).to.have.been.calledOnce;
+        });
+
+        it('outputs an single receipt to stdout', () => {
+            expect(console.log).to.have.been.calledWith(JSON.stringify(registeredPayment));
         });
     });
 });
