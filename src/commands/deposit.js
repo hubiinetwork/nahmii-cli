@@ -1,6 +1,7 @@
 'use strict';
 
 const striim = require('../sdk');
+const ethers = require('ethers');
 
 
 module.exports = {
@@ -15,6 +16,7 @@ module.exports = {
             default: 250000,
             type: 'number'
         });
+        yargs.coerce('amount', arg => arg); // Coerce it to remain a string
     },
     handler: async (argv) => {
         const amount = validateAmountIsPositiveDecimalNumber(argv.amount);
@@ -36,10 +38,17 @@ module.exports = {
 };
 
 function validateAmountIsPositiveDecimalNumber(amount) {
-    if (typeof amount !== 'number')
-        throw new TypeError('amount must be a number');
-    if (amount <= 0)
-        throw new Error('amount must be greater than zero');
+    let amountBN;
+    try {
+        amountBN = ethers.utils.parseEther(amount);
+    }
+    catch(err) {
+        dbg(err);
+        throw new TypeError('Amount must be a number!');
+    }
+
+    if (amountBN.eq(0))
+        throw new Error('Amount must be greater than zero!');
 
     return amount;
 }
@@ -52,8 +61,6 @@ let validateGasLimitIsPositiveInteger = function(gas) {
 };
 
 function reduceReceipt(txReceipt) {
-    const ethers = require('ethers');
-
     return {
         transactionHash: txReceipt.transactionHash,
         blockNumber: txReceipt.blockNumber,
