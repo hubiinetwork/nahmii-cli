@@ -81,7 +81,7 @@ describe('Pay command', () => {
                 .withArgs(stubbedConfig.wallet.secret)
                 .returns(expectedPrivateKey);
             await cmd({
-                amount: 1000,
+                amount: '1000',
                 currency: 'HBT',
                 recipient: walletID
             });
@@ -96,7 +96,7 @@ describe('Pay command', () => {
         });
     });
 
-    context(`pay 0.1 ETH to ${walletID}`, () => {
+    context(`pay 1.1 ETH to ${walletID}`, () => {
         const expectedPrivateKey = 'a private key';
         let fakePayment;
 
@@ -109,7 +109,7 @@ describe('Pay command', () => {
             stubbedPayment
                 .withArgs(
                     stubbedProvider,
-                    (0.1 * 10 ** 18).toString(),
+                    '1100000000000000000',
                     '0x' + '00'.repeat(20),
                     walletID2,
                     walletID
@@ -118,7 +118,7 @@ describe('Pay command', () => {
                 .withArgs(stubbedConfig.wallet.secret)
                 .returns(expectedPrivateKey);
             await cmd({
-                amount: 0.1,
+                amount: '1.1',
                 currency: 'ETH',
                 recipient: walletID
             });

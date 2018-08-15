@@ -2,11 +2,14 @@
 
 const striim = require('../sdk');
 const prefix0x = striim.utils.prefix0x;
+const ethers = require('ethers');
 
 module.exports = {
     command: 'pay <amount> <currency> to <recipient>',
     describe: 'Send <amount> of <currency> from your current wallet to the <recipient>\'s wallet',
-    builder: {},
+    builder: yargs => {
+        yargs.coerce('amount', arg => arg); // Coerce it to remain a string
+    },
     handler: async (argv) => {
         const config = require('../config');
 
@@ -14,7 +17,7 @@ module.exports = {
             const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
             const currencyDefinition = await getCurrencyBySymbol(provider, argv.currency);
 
-            const amount = (parseFloat(argv.amount) * 10 ** currencyDefinition.decimals).toString();
+            const amount = ethers.utils.parseUnits(argv.amount, currencyDefinition.decimals).toString();
             const currency = prefix0x(currencyDefinition.currency);
             const recipient = prefix0x(argv.recipient);
             const sender = prefix0x(config.wallet.address);
