@@ -72,13 +72,15 @@ const stubbedProvider = {
     getPendingPayments: sinon.stub()
 };
 
+const utils = require('../../sdk').utils;
+
 function proxyquireCommand() {
     return proxyquire('./payments', {
         '../../sdk': {
             StriimProvider: function() {
                 return stubbedProvider;
             },
-            utils: require('../../sdk').utils
+            utils: utils
         },
         '../../config': stubbedConfig
     });
@@ -88,6 +90,7 @@ describe('Show Payments command', () => {
     let showPayments;
 
     beforeEach(() => {
+        stubbedConfig.wallet.address = wallet1;
         showPayments = proxyquireCommand().handler;
         sinon.stub(console, 'log');
     });
@@ -97,20 +100,23 @@ describe('Show Payments command', () => {
         stubbedProvider.getPendingPayments.reset();
     });
 
-    context('API responds with payments', () => {
-        beforeEach(() => {
-            stubbedProvider.getPendingPayments.resolves(testPayments);
-        });
+    [utils.prefix0x(wallet1), utils.strip0x(wallet1)].forEach(myWallet => {
+        context('API responds with payments', () => {
+            beforeEach(() => {
+                stubbedConfig.wallet.address = myWallet;
+                stubbedProvider.getPendingPayments.resolves(testPayments);
+            });
 
-        it('outputs only payments related to my wallet', async () => {
-            await showPayments();
-            const expectedPayments = [
-                testPayments[0],
-                testPayments[1],
-                testPayments[2],
-                testPayments[4]
-            ];
-            expect(console.log).to.have.been.calledWith(JSON.stringify(expectedPayments));
+            it('outputs only payments related to my wallet', async () => {
+                await showPayments();
+                const expectedPayments = [
+                    testPayments[0],
+                    testPayments[1],
+                    testPayments[2],
+                    testPayments[4]
+                ];
+                expect(console.log).to.have.been.calledWith(JSON.stringify(expectedPayments));
+            });
         });
     });
 
