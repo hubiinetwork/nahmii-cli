@@ -95,4 +95,41 @@ describe('Pay command', () => {
             expect(fakePayment.register).to.have.been.calledOnce;
         });
     });
+
+    context(`pay 0.1 ETH to ${walletID}`, () => {
+        const expectedPrivateKey = 'a private key';
+        let fakePayment;
+
+        beforeEach(async () => {
+            let cmd = proxyquireCommand().handler;
+            fakePayment = {
+                sign: sinon.stub(),
+                register: sinon.stub()
+            };
+            stubbedPayment
+                .withArgs(
+                    stubbedProvider,
+                    (0.1 * 10 ** 18).toString(),
+                    '0x' + '00'.repeat(20),
+                    walletID2,
+                    walletID
+                ).returns(fakePayment);
+            stubbedConfig.privateKey
+                .withArgs(stubbedConfig.wallet.secret)
+                .returns(expectedPrivateKey);
+            await cmd({
+                amount: 0.1,
+                currency: 'ETH',
+                recipient: walletID
+            });
+        });
+
+        it('signs the payment given secret from configuration', () => {
+            expect(fakePayment.sign).to.have.been.calledWith(expectedPrivateKey);
+        });
+
+        it('registers payment with API', () => {
+            expect(fakePayment.register).to.have.been.calledOnce;
+        });
+    });
 });

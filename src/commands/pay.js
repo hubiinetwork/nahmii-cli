@@ -12,12 +12,10 @@ module.exports = {
 
         try {
             const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
+            const currencyDefinition = await getCurrencyBySymbol(provider, argv.currency);
 
-            const tokens = await provider.getSupportedTokens();
-            const tokenDefinition = tokens.find(t => t.symbol.toUpperCase() === argv.currency.toUpperCase());
-
-            const amount = (parseFloat(argv.amount) * 10 ** tokenDefinition.decimals).toString();
-            const currency = prefix0x(tokenDefinition.currency);
+            const amount = (parseFloat(argv.amount) * 10 ** currencyDefinition.decimals).toString();
+            const currency = prefix0x(currencyDefinition.currency);
             const recipient = prefix0x(argv.recipient);
             const sender = prefix0x(config.wallet.address);
 
@@ -38,3 +36,16 @@ module.exports = {
         }
     }
 };
+
+async function getCurrencyBySymbol(provider, symbol) {
+    if (symbol.toUpperCase() === 'ETH') {
+        return {
+            currency: prefix0x('00'.repeat(20)),
+            decimals: 18,
+            symbol: 'ETH'
+        };
+    }
+
+    const tokens = await provider.getSupportedTokens();
+    return tokens.find(t => t.symbol.toUpperCase() === symbol.toUpperCase());
+}
