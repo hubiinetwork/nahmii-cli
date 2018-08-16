@@ -78,17 +78,17 @@ describe('Deposit command', () => {
         console.log.restore();
     });
 
-    context('deposit 1.2 ETH', () => {
+    context('deposit 1.1 ETH', () => {
         beforeEach(() => {
             return depositCmd.handler.call(undefined, {
-                amount: 1.2,
+                amount: '1.1',
                 currency: 'ETH',
                 gas: 2
             });
         });
 
-        it('tells wallet to deposit 1.2 ETH', () => {
-            expect(stubbedWallet.depositEth).to.have.been.calledWith(1.2, {gasLimit: 2})
+        it('tells wallet to deposit 1.1 ETH', () => {
+            expect(stubbedWallet.depositEth).to.have.been.calledWith('1.1', {gasLimit: 2})
         });
 
         it('outputs an single receipt to stdout', () => {
@@ -103,17 +103,17 @@ describe('Deposit command', () => {
         });
     });
 
-    context('deposit 3.14 TT1', () => {
+    context('deposit 0.07 TT1', () => {
         beforeEach(() => {
             return depositCmd.handler.call(undefined, {
-                amount: 3.14,
+                amount: '0.07',
                 currency: 'TT1',
                 gas: 2
             });
         });
 
-        it('tells wallet to deposit 3.14 TT1', () => {
-            expect(stubbedWallet.depositToken).to.have.been.calledWith(3.14, 'TT1', {gasLimit: 2})
+        it('tells wallet to deposit 0.07 TT1', () => {
+            expect(stubbedWallet.depositToken).to.have.been.calledWith('0.07', 'TT1', {gasLimit: 2})
         });
 
         it('outputs 2 receipts to stdout', () => {
@@ -153,7 +153,7 @@ describe('Deposit command', () => {
         it('yields an error', (done) => {
             depositCmd.handler
                 .call(undefined, {
-                    amount: 0,
+                    amount: '0',
                     currency: 'ETH',
                     gas: 2
                 })
@@ -170,7 +170,7 @@ describe('Deposit command', () => {
             stubbedWallet.depositEth.rejects(new Error('transaction failed'));
             depositCmd.handler
                 .call(undefined, {
-                    amount: 1.2,
+                    amount: '1.2',
                     currency: 'ETH',
                     gas: 2
                 })
@@ -188,7 +188,7 @@ describe('Deposit command', () => {
 
             depositCmd.handler
                 .call(undefined, {
-                    amount: 1.2,
+                    amount: '1.2',
                     currency: 'TT1',
                     gas: 2
                 })

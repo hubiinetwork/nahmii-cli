@@ -1,6 +1,6 @@
 {
   "name": "striim-cli",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "CLI interface for using the Hubii Striim APIs",
   "main": "index.js",
   "scripts": {
