@@ -1,6 +1,6 @@
 'use strict';
 
-const striim = require('../../sdk');
+const striim = require('striim-sdk');
 
 module.exports = {
     command: 'balance',

@@ -30,7 +30,7 @@ const stubbedProvider = {
 
 function proxyquireCommand() {
     return proxyquire('./deposit', {
-        '../sdk': {
+        'striim-sdk': {
             StriimProvider: stubbedProviderCtr,
             Wallet: function() {
                 return stubbedWallet;

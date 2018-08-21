@@ -1,6 +1,6 @@
 'use strict';
 
-const striim = require('../sdk');
+const striim = require('striim-sdk');
 const prefix0x = striim.utils.prefix0x;
 const ethers = require('ethers');
 
