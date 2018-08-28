@@ -1,6 +1,7 @@
 'use strict';
 
 const striim = require('striim-sdk');
+const {strip0x} = striim.utils;
 
 module.exports = {
     command: 'receipts',
@@ -10,8 +11,8 @@ module.exports = {
         const config = require('../../config');
 
         const isMyReceipt = (receipt) => {
-            return receipt.sender.addr.toUpperCase() === config.wallet.address.toUpperCase()
-                || receipt.recipient.addr.toUpperCase() === config.wallet.address.toUpperCase();
+            return strip0x(receipt.sender.addr.toUpperCase()) === strip0x(config.wallet.address.toUpperCase())
+                || strip0x(receipt.recipient.addr.toUpperCase()) === strip0x(config.wallet.address.toUpperCase());
         };
 
         try {
