@@ -22,7 +22,7 @@ module.exports = {
             if (!receipts.length)
                 receipts = [];
             receipts = receipts.filter(isMyReceipt);
-            console.log(receipts);
+            console.log(JSON.stringify(receipts));
         }
         catch (err) {
             if (process.env.LOG_LEVEL === 'debug')
