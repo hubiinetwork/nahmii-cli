@@ -8,7 +8,6 @@ module.exports = {
     command: 'pay <amount> <currency> to <recipient>',
     describe: 'Send <amount> of <currency> from your current wallet to the <recipient>\'s wallet',
     builder: yargs => {
-        yargs.coerce('amount', arg => arg); // Coerce it to remain a string
     },
     handler: async (argv) => {
         const config = require('../config');

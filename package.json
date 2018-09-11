@@ -1,6 +1,6 @@
 {
   "name": "striim-cli",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "CLI interface for using the Hubii Striim APIs",
   "main": "index.js",
   "scripts": {
@@ -9,6 +9,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hubiinetwork/striim-cli.git"
+  },
+  "yargs": {
+    "parse-numbers": false
   },
   "keywords": [
     "hubii",
