@@ -5,9 +5,9 @@ const fs = require('fs');
 const yaml = require('node-yaml');
 const keythereum = require('keythereum');
 const homedir = require('os').homedir();
-const {prefix0x} = require('striim-sdk').utils;
+const {prefix0x} = require('nahmii-sdk').utils;
 
-const configPath = path.resolve(homedir, '.striim/config.yaml');
+const configPath = path.resolve(homedir, '.nahmii/config.yaml');
 if (!fs.existsSync(configPath)) {
     console.error('Unable to locate config file: ' + configPath);
     process.exit(-1);
@@ -26,7 +26,7 @@ cfg.file = configPath;
 
 cfg.privateKey = (secret) => {
 //    console.debug(`Using key '${cfg.wallet.address}' for signing.`);
-    const keyObject = keythereum.importFromFile(cfg.wallet.address, path.resolve(homedir, '.striim'));
+    const keyObject = keythereum.importFromFile(cfg.wallet.address, path.resolve(homedir, '.nahmii'));
     return prefix0x(keythereum.recover(secret, keyObject).toString('hex'));
 };
 

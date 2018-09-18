@@ -1,6 +1,6 @@
 'use strict';
 
-const striim = require('striim-sdk');
+const nahmii = require('nahmii-sdk');
 
 module.exports = {
     command: 'config',
@@ -16,7 +16,7 @@ module.exports = {
         console.log(`\twallet address: ${config.wallet.address}`);
         console.log(`\twallet secret: ${'*'.repeat(config.wallet.secret.length ? 20 : 0)}`);
 
-        const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
+        const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
 
         try {
             await Promise.all([

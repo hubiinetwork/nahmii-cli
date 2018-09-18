@@ -40,12 +40,12 @@ const stubbedProvider = {
 
 function proxyquireCommand() {
     return proxyquire('./pay', {
-        'striim-sdk': {
-            StriimProvider: function() {
+        'nahmii-sdk': {
+            NahmiiProvider: function() {
                 return stubbedProvider;
             },
             Payment: stubbedPayment,
-            utils: require('striim-sdk').utils
+            utils: require('nahmii-sdk').utils
         },
         '../config': stubbedConfig
     });

@@ -1,10 +1,10 @@
 'use strict';
 
-const striim = require('striim-sdk');
+const nahmii = require('nahmii-sdk');
 
 function isSameAddress(a, b) {
-    a = striim.utils.strip0x(a).toLowerCase();
-    b = striim.utils.strip0x(b).toLowerCase();
+    a = nahmii.utils.strip0x(a).toLowerCase();
+    b = nahmii.utils.strip0x(b).toLowerCase();
     return a === b;
 }
 
@@ -14,7 +14,7 @@ module.exports = {
     builder: {},
     handler: async (argv) => {
         const config = require('../../config');
-        const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
+        const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
 
         const isMyPayment = (payment) => {
             return isSameAddress(payment.sender.addr, config.wallet.address)

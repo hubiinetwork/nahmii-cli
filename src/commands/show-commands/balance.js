@@ -1,18 +1,18 @@
 'use strict';
 
-const striim = require('striim-sdk');
+const nahmii = require('nahmii-sdk');
 
 module.exports = {
     command: 'balance',
-    describe: 'Show my striim assets',
+    describe: 'Show my nahmii assets',
     builder: {},
     handler: async (argv) => {
         const config = require('../../config');
-        const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
+        const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
 
         try {
-            let wallet = new striim.Wallet(config.privateKey(config.wallet.secret), provider);
-            let balances = await wallet.getStriimBalance();
+            let wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
+            let balances = await wallet.getNahmiiBalance();
             console.log(JSON.stringify(balances));
         }
         catch (err) {

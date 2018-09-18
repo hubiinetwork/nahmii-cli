@@ -72,12 +72,12 @@ const stubbedProvider = {
     getPendingPayments: sinon.stub()
 };
 
-const utils = require('striim-sdk').utils;
+const utils = require('nahmii-sdk').utils;
 
 function proxyquireCommand() {
     return proxyquire('./payments', {
-        'striim-sdk': {
-            StriimProvider: function() {
+        'nahmii-sdk': {
+            NahmiiProvider: function() {
                 return stubbedProvider;
             },
             utils: utils
