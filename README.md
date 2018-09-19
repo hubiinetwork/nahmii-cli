@@ -20,9 +20,11 @@ See www.hubii.com for more information.
 
 * To use this software you need a modern version of **NodeJS and NPM**.
   We recommend having the current LTS version (v8.x) installed, or
-  later, and updating NPM to the latest available version.
+  later, and updating NPM to the latest available version. You will also need
+  Python and a C++ compiler installed. For a Windows 10 guide, see here:
+  https://blog.risingstack.com/node-js-windows-10-tutorial/
 * You will also need an **API key** for access to _hubii_'s APIs.
-* An ethereum wallet stored as an **UTC file**, and is's **passphrase**.
+* An Ethereum wallet stored as an **UTC/keystore file**, and is's **passphrase**.
 
 ## Installation
 
