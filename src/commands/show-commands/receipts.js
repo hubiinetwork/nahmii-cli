@@ -1,7 +1,7 @@
 'use strict';
 
-const striim = require('striim-sdk');
-const {strip0x} = striim.utils;
+const nahmii = require('nahmii-sdk');
+const {strip0x} = nahmii.utils;
 
 module.exports = {
     command: 'receipts',
@@ -16,7 +16,7 @@ module.exports = {
         };
 
         try {
-            const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
+            const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
 
             let receipts = await provider.getAllReceipts();
             if (!receipts.length)

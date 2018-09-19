@@ -1,20 +1,21 @@
 {
-  "name": "striim-cli",
-  "version": "1.0.8",
-  "description": "CLI interface for using the Hubii Striim APIs",
+  "name": "nahmii-cli",
+  "version": "1.0.0-beta.2",
+  "description": "CLI interface for using the nahmii by hubii protocol",
   "main": "index.js",
   "scripts": {
     "test": "nyc mocha \"src/**/*.spec.js\""
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/hubiinetwork/striim-cli.git"
+    "url": "git+https://github.com/hubiinetwork/nahmii-cli.git"
   },
   "yargs": {
     "parse-numbers": false
   },
   "keywords": [
     "hubii",
+    "nahmii",
     "striim",
     "cli",
     "api",
@@ -27,18 +28,18 @@
   "author": "Morten Fjeldstad <morten@hubii.com>",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/hubiinetwork/striim-cli/issues"
+    "url": "https://github.com/hubiinetwork/nahmii-cli/issues"
   },
-  "homepage": "https://github.com/hubiinetwork/striim-cli#readme",
+  "homepage": "https://github.com/hubiinetwork/nahmii-cli#readme",
   "bin": {
-    "striim": "src/main.js"
+    "nahmii": "src/main.js"
   },
   "dependencies": {
     "ethers": "^3.0.26",
     "keythereum": "^1.0.4",
+    "nahmii-sdk": "^1.0.0-beta.4",
     "node-yaml": "^3.1.1",
     "readline-sync": "^1.4.9",
-    "striim-sdk": "^1.0.0",
     "superagent": "^3.8.3",
     "web3-utils": "^1.0.0-beta.35",
     "yargs": "^12.0.1"

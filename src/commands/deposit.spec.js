@@ -30,8 +30,8 @@ const stubbedProvider = {
 
 function proxyquireCommand() {
     return proxyquire('./deposit', {
-        'striim-sdk': {
-            StriimProvider: stubbedProviderCtr,
+        'nahmii-sdk': {
+            NahmiiProvider: stubbedProviderCtr,
             Wallet: function() {
                 return stubbedWallet;
             }
@@ -61,7 +61,7 @@ describe('Deposit command', () => {
             .withArgs(stubbedConfig.apiRoot, stubbedConfig.appId, stubbedConfig.appSecret)
             .returns(stubbedProvider);
         stubbedProvider.getBlockNumber.resolves(1);
-        stubbedProvider.getApiAccessToken.resolves('striim JWT');
+        stubbedProvider.getApiAccessToken.resolves('nahmii JWT');
         sinon.stub(console, 'log');
         depositCmd = proxyquireCommand();
         stubbedWallet.depositEth.resolves(txReceipt1);

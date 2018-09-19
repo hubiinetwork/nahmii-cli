@@ -1,11 +1,11 @@
 'use strict';
 
-const striim = require('striim-sdk');
+const nahmii = require('nahmii-sdk');
 const ethers = require('ethers');
 
 module.exports = {
     command: 'deposit <amount> <currency> [--gas=<gaslimit>]',
-    describe: 'Deposits <amount> of ETH (or any supported token) into your striim account.',
+    describe: 'Deposits <amount> of ETH (or any supported token) into your nahmii account.',
     builder: yargs => {
         yargs.example('deposit 1 ETH', 'Deposits 1 Ether using default gas limit.');
         yargs.example('deposit 1 ETH --gas=500000', 'Deposits 1 Ether and sets the gas limit to 500000.');
@@ -22,8 +22,8 @@ module.exports = {
         const gasLimit = validateGasLimitIsPositiveInteger(argv.gas);
 
         const config = require('../config');
-        const provider = await new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
-        const wallet = new striim.Wallet(config.privateKey(config.wallet.secret), provider);
+        const provider = await new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
+        const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
 
         if (argv.currency.toUpperCase() === 'ETH') {
             const receipt = await wallet.depositEth(amount, {gasLimit});

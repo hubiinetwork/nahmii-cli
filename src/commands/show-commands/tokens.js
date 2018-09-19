@@ -1,15 +1,15 @@
 'use strict';
 
-const striim = require('striim-sdk');
+const nahmii = require('nahmii-sdk');
 
 module.exports = {
     command: 'tokens',
-    describe: 'Show tokens supported by striim',
+    describe: 'Show tokens supported by nahmii',
     builder: {},
     handler: async (argv) => {
         try {
             const config = require('../../config');
-            const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
+            const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
 
             const supportedTokens = await provider.getSupportedTokens();
             if (supportedTokens.length) {

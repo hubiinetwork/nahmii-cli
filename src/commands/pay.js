@@ -1,7 +1,7 @@
 'use strict';
 
-const striim = require('striim-sdk');
-const prefix0x = striim.utils.prefix0x;
+const nahmii = require('nahmii-sdk');
+const prefix0x = nahmii.utils.prefix0x;
 const ethers = require('ethers');
 
 module.exports = {
@@ -13,7 +13,7 @@ module.exports = {
         const config = require('../config');
 
         try {
-            const provider = new striim.StriimProvider(config.apiRoot, config.appId, config.appSecret);
+            const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
             const currencyDefinition = await getCurrencyBySymbol(provider, argv.currency);
 
             const amount = ethers.utils.parseUnits(argv.amount, currencyDefinition.decimals).toString();
@@ -21,7 +21,7 @@ module.exports = {
             const recipient = prefix0x(argv.recipient);
             const sender = prefix0x(config.wallet.address);
 
-            const payment = new striim.Payment(provider, amount, currency, sender, recipient);
+            const payment = new nahmii.Payment(provider, amount, currency, sender, recipient);
 
             const secret = config.wallet.secret;
             const privateKey = config.privateKey(secret);

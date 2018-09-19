@@ -17,7 +17,7 @@ module.exports = {
         })
     },
     handler : async (argv) => {
-        const configDir = path.resolve(os.homedir(), '.striim');
+        const configDir = path.resolve(os.homedir(), '.nahmii');
         const configFile = path.resolve(configDir, 'config.yaml');
         const keystoreDir = path.resolve(configDir, 'keystore');
 
