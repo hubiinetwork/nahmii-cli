@@ -11,8 +11,8 @@ module.exports = {
         const config = require('../../config');
 
         const isMyReceipt = (receipt) => {
-            return strip0x(receipt.sender.addr.toUpperCase()) === strip0x(config.wallet.address.toUpperCase())
-                || strip0x(receipt.recipient.addr.toUpperCase()) === strip0x(config.wallet.address.toUpperCase());
+            return strip0x(receipt.sender.wallet.toUpperCase()) === strip0x(config.wallet.address.toUpperCase())
+                || strip0x(receipt.recipient.wallet.toUpperCase()) === strip0x(config.wallet.address.toUpperCase());
         };
 
         try {

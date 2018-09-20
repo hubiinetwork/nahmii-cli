@@ -1,5 +1,6 @@
 'use strict';
 
+const dbg = require('../dbg');
 const nahmii = require('nahmii-sdk');
 
 module.exports = {
@@ -31,8 +32,3 @@ module.exports = {
         }
     }
 };
-
-function dbg(...args) {
-    if (process.env.LOG_LEVEL === 'debug')
-        console.error(...args);
-}

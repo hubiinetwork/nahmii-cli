@@ -1,5 +1,6 @@
 'use strict';
 
+const dbg = require('../dbg');
 const nahmii = require('nahmii-sdk');
 const prefix0x = nahmii.utils.prefix0x;
 const ethers = require('ethers');
@@ -15,13 +16,13 @@ module.exports = {
         try {
             const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
             const currencyDefinition = await getCurrencyBySymbol(provider, argv.currency);
-
-            const amount = ethers.utils.parseUnits(argv.amount, currencyDefinition.decimals).toString();
             const currency = prefix0x(currencyDefinition.currency);
+
+            const amount = new nahmii.MonetaryAmount(ethers.utils.parseUnits(argv.amount, currencyDefinition.decimals).toString(), currency);
             const recipient = prefix0x(argv.recipient);
             const sender = prefix0x(config.wallet.address);
 
-            const payment = new nahmii.Payment(provider, amount, currency, sender, recipient);
+            const payment = new nahmii.Payment(provider, amount, sender, recipient);
 
             const secret = config.wallet.secret;
             const privateKey = config.privateKey(secret);
@@ -36,11 +37,6 @@ module.exports = {
         }
     }
 };
-
-function dbg(...args) {
-    if (process.env.LOG_LEVEL === 'debug')
-        console.error(...args);
-}
 
 async function getCurrencyBySymbol(provider, symbol) {
     if (symbol.toUpperCase() === 'ETH') {

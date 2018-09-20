@@ -16,46 +16,46 @@ const testPayments = [
     {
         id: '1',
         sender: {
-            addr: wallet1
+            wallet: wallet1
         },
         recipient: {
-            addr: wallet2
+            wallet: wallet2
         }
     },
     {
         id: '2',
         sender: {
-            addr: wallet1
+            wallet: wallet1
         },
         recipient: {
-            addr: wallet3
+            wallet: wallet3
         }
     },
     {
         id: '3',
         sender: {
-            addr: wallet2
+            wallet: wallet2
         },
         recipient: {
-            addr: wallet1
+            wallet: wallet1
         }
     },
     {
         id: '4',
         sender: {
-            addr: wallet3
+            wallet: wallet3
         },
         recipient: {
-            addr: wallet2
+            wallet: wallet2
         }
     },
     {
         id: '5',
         sender: {
-            addr: wallet3
+            wallet: wallet3
         },
         recipient: {
-            addr: wallet1
+            wallet: wallet1
         }
     },
 ];
