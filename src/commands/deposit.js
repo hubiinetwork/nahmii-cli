@@ -1,5 +1,6 @@
 'use strict';
 
+const dbg = require('../dbg');
 const nahmii = require('nahmii-sdk');
 const ethers = require('ethers');
 
@@ -66,9 +67,4 @@ function reduceReceipt(txReceipt) {
         gasUsed: ethers.utils.bigNumberify(txReceipt.gasUsed).toString(),
         href: `https://ropsten.etherscan.io/tx/${txReceipt.transactionHash}`
     };
-}
-
-function dbg(...args) {
-    if (process.env.LOG_LEVEL === 'debug')
-        console.error(...args);
 }

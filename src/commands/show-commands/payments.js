@@ -17,8 +17,8 @@ module.exports = {
         const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
 
         const isMyPayment = (payment) => {
-            return isSameAddress(payment.sender.addr, config.wallet.address)
-                || isSameAddress(payment.recipient.addr, config.wallet.address);
+            return isSameAddress(payment.sender.wallet, config.wallet.address)
+                || isSameAddress(payment.recipient.wallet, config.wallet.address);
         };
 
         try {

@@ -12,6 +12,7 @@ const walletID = '0x1234567890123456789012345678901234567890';
 const walletID2 = '0x1234567890123456789012345678901234567891';
 
 const stubbedPayment = sinon.stub();
+const stubbedMonetaryAmount = sinon.stub();
 
 const testCurrency = {
     hbt: {
@@ -45,6 +46,7 @@ function proxyquireCommand() {
                 return stubbedProvider;
             },
             Payment: stubbedPayment,
+            MonetaryAmount: stubbedMonetaryAmount,
             utils: require('nahmii-sdk').utils
         },
         '../config': stubbedConfig
@@ -53,7 +55,7 @@ function proxyquireCommand() {
 
 describe('Pay command', () => {
     const registeredPayment = {expected: 'payment registration'};
-    let fakePayment;
+    let fakePayment, fakeMoney;
 
     beforeEach(() => {
         sinon.stub(console, 'log');
@@ -62,6 +64,7 @@ describe('Pay command', () => {
             register: sinon.stub()
         };
         fakePayment.register.resolves(registeredPayment);
+        fakeMoney = {};
     });
 
     afterEach(() => {
@@ -77,14 +80,20 @@ describe('Pay command', () => {
         beforeEach(async () => {
             let cmd = proxyquireCommand().handler;
             stubbedProvider.getSupportedTokens.resolves([testCurrency.hbt, testCurrency.wtf]);
+            stubbedMonetaryAmount
+                .withArgs(
+                    (1000 * 10 ** testCurrency.hbt.decimals).toString(),
+                    testCurrency.hbt.currency,
+                )
+                .returns(fakeMoney);
             stubbedPayment
                 .withArgs(
                     stubbedProvider,
-                    (1000 * 10 ** testCurrency.hbt.decimals).toString(),
-                    testCurrency.hbt.currency,
+                    fakeMoney,
                     walletID2,
                     walletID
-                ).returns(fakePayment);
+                )
+                .returns(fakePayment);
             stubbedConfig.privateKey
                 .withArgs(stubbedConfig.wallet.secret)
                 .returns(expectedPrivateKey);
@@ -113,11 +122,14 @@ describe('Pay command', () => {
 
         beforeEach(async () => {
             let cmd = proxyquireCommand().handler;
+            stubbedMonetaryAmount
+                .withArgs('1100000000000000000', '0x' + '00'.repeat(20),)
+                .returns(fakeMoney);
+
             stubbedPayment
                 .withArgs(
                     stubbedProvider,
-                    '1100000000000000000',
-                    '0x' + '00'.repeat(20),
+                    fakeMoney,
                     walletID2,
                     walletID
                 ).returns(fakePayment);
