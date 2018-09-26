@@ -24,7 +24,7 @@ See www.hubii.com for more information.
   Python and a C++ compiler installed. For a Windows 10 guide, see here:
   https://blog.risingstack.com/node-js-windows-10-tutorial/
 * You will also need an **API key** for access to _hubii_'s APIs.
-* An Ethereum wallet stored as an **UTC/keystore file**, and is's **passphrase**.
+* An Ethereum wallet stored as an **UTC/keystore file**, and its **passphrase**.
 
 ## Installation
 
