@@ -8,7 +8,7 @@ module.exports = {
     command: 'receipts',
     describe: 'Show receipts for my executed payments',
     builder: {},
-    handler: async (argv) => {
+    handler: async () => {
         const config = require('../../config');
         const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
 

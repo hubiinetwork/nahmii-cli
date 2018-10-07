@@ -8,8 +8,7 @@ const ethers = require('ethers');
 module.exports = {
     command: 'pay <amount> <currency> to <recipient>',
     describe: 'Send <amount> of <currency> from your current wallet to the <recipient>\'s wallet',
-    builder: yargs => {
-    },
+    builder: {},
     handler: async (argv) => {
         const config = require('../config');
         const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);

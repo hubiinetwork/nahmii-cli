@@ -13,7 +13,7 @@ module.exports = {
     command: 'payments',
     describe: 'Show my pending payments',
     builder: {},
-    handler: async (argv) => {
+    handler: async () => {
         const config = require('../../config');
         const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
 

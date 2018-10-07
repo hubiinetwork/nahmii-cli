@@ -7,7 +7,7 @@ module.exports = {
     command: 'tokens',
     describe: 'Show tokens supported by nahmii',
     builder: {},
-    handler: async (argv) => {
+    handler: async () => {
         const config = require('../../config');
         const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
 
@@ -18,7 +18,7 @@ module.exports = {
                     return {
                         symbol: t.symbol,
                         currency: t.currency
-                    }
+                    };
                 }));
                 return console.log(result);
             }

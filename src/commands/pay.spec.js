@@ -36,7 +36,8 @@ const stubbedConfig = {
 };
 
 const stubbedProvider = {
-    getSupportedTokens: sinon.stub()
+    getSupportedTokens: sinon.stub(),
+    stopUpdate: sinon.stub()
 };
 
 function proxyquireCommand() {
@@ -69,6 +70,7 @@ describe('Pay command', () => {
 
     afterEach(() => {
         stubbedProvider.getSupportedTokens.reset();
+        stubbedProvider.stopUpdate.reset();
         stubbedPayment.reset();
         stubbedConfig.privateKey.reset();
         console.log.restore();
@@ -115,6 +117,10 @@ describe('Pay command', () => {
         it('outputs an single receipt to stdout', () => {
             expect(console.log).to.have.been.calledWith(JSON.stringify(registeredPayment));
         });
+
+        it('stops token refresh', () => {
+            expect(stubbedProvider.stopUpdate).to.have.been.called;
+        });
     });
 
     context(`pay 1.1 ETH to ${walletID}`, () => {
@@ -153,6 +159,10 @@ describe('Pay command', () => {
 
         it('outputs an single receipt to stdout', () => {
             expect(console.log).to.have.been.calledWith(JSON.stringify(registeredPayment));
+        });
+
+        it('stops token refresh', () => {
+            expect(stubbedProvider.stopUpdate).to.have.been.called;
         });
     });
 });

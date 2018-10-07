@@ -7,7 +7,7 @@ module.exports = {
     command: 'balance',
     describe: 'Show my nahmii assets',
     builder: {},
-    handler: async (argv) => {
+    handler: async () => {
         const config = require('../../config');
         const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
 
