@@ -8,13 +8,12 @@ const ethers = require('ethers');
 module.exports = {
     command: 'pay <amount> <currency> to <recipient>',
     describe: 'Send <amount> of <currency> from your current wallet to the <recipient>\'s wallet',
-    builder: yargs => {
-    },
+    builder: {},
     handler: async (argv) => {
         const config = require('../config');
+        const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
 
         try {
-            const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
             const currencyDefinition = await getCurrencyBySymbol(provider, argv.currency);
             const currency = prefix0x(currencyDefinition.currency);
 
@@ -34,6 +33,9 @@ module.exports = {
         catch (err) {
             dbg(err);
             throw new Error(`Payment failed: ${err.message}`);
+        }
+        finally {
+            provider.stopUpdate();
         }
     }
 };

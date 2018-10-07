@@ -57,7 +57,7 @@ const testPayments = [
         recipient: {
             wallet: wallet1
         }
-    },
+    }
 ];
 
 const stubbedConfig = {
@@ -69,7 +69,8 @@ const stubbedConfig = {
 };
 
 const stubbedProvider = {
-    getPendingPayments: sinon.stub()
+    getPendingPayments: sinon.stub(),
+    stopUpdate: sinon.stub()
 };
 
 const utils = require('nahmii-sdk').utils;
@@ -102,13 +103,13 @@ describe('Show Payments command', () => {
 
     [utils.prefix0x(wallet1), utils.strip0x(wallet1)].forEach(myWallet => {
         context('API responds with payments', () => {
-            beforeEach(() => {
+            beforeEach(async () => {
                 stubbedConfig.wallet.address = myWallet;
                 stubbedProvider.getPendingPayments.resolves(testPayments);
+                await showPayments();
             });
 
-            it('outputs only payments related to my wallet', async () => {
-                await showPayments();
+            it('outputs only payments related to my wallet', () => {
                 const expectedPayments = [
                     testPayments[0],
                     testPayments[1],
@@ -117,31 +118,47 @@ describe('Show Payments command', () => {
                 ];
                 expect(console.log).to.have.been.calledWith(JSON.stringify(expectedPayments));
             });
+
+            it('stops token refresh', () => {
+                expect(stubbedProvider.stopUpdate).to.have.been.called;
+            });
         });
     });
 
     context('API responds with something other than an array', () => {
-        beforeEach(() => {
+        beforeEach(async () => {
             stubbedProvider.getPendingPayments.resolves({});
+            await showPayments();
         });
 
-        it('outputs empty array', async () => {
-            await showPayments();
+        it('outputs empty array', () => {
             const expectedPayments = [];
             expect(console.log).to.have.been.calledWith(JSON.stringify(expectedPayments));
+        });
+
+        it('stops token refresh', () => {
+            expect(stubbedProvider.stopUpdate).to.have.been.called;
         });
     });
 
     context('API responds with error', () => {
-        beforeEach(() => {
+        let error;
+
+        beforeEach((done) => {
             stubbedProvider.getPendingPayments.rejects();
+            showPayments()
+                .catch(err => {
+                    error = err;
+                    done();
+                });
         });
 
-        it('outputs empty array', (done) => {
-            showPayments().catch(err => {
-                expect(err.message).to.match(/show.*pending.*payments/i);
-                done();
-            });
+        it('outputs empty array', () => {
+            expect(error.message).to.match(/show.*pending.*payments/i);
+        });
+
+        it('stops token refresh', () => {
+            expect(stubbedProvider.stopUpdate).to.have.been.called;
         });
     });
 });

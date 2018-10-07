@@ -1,18 +1,19 @@
 #!/usr/bin/env node
+'use strict';
 
-const argv = require('yargs')
+require('yargs')
     .commandDir('./commands', {exclude: /.*.spec.js$/})
-    .fail((msg, err, yargs) => {
+    .fail((msg, err) => {
         if (err) {
             if (process.env.LOG_LEVEL === 'debug')
                 console.error(err.stack);
             else
                 console.error('Error: ' + err.message);
         }
-        else
+        else {
             console.error(msg);
+        }
         process.exit(1);
     })
     .demandCommand()
-    .help()
-    .argv;
+    .help();

@@ -14,7 +14,7 @@ module.exports = {
             desc: 'replace existing config',
             default: false,
             type: 'boolean'
-        })
+        });
     },
     handler : async (argv) => {
         const configDir = path.resolve(os.homedir(), '.nahmii');

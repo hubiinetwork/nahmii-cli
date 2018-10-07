@@ -1,5 +1,6 @@
 'use strict';
 
+const dbg = require('../../dbg');
 const nahmii = require('nahmii-sdk');
 const {strip0x} = nahmii.utils;
 
@@ -7,8 +8,9 @@ module.exports = {
     command: 'receipts',
     describe: 'Show receipts for my executed payments',
     builder: {},
-    handler: async (argv) => {
+    handler: async () => {
         const config = require('../../config');
+        const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
 
         const isMyReceipt = (receipt) => {
             return strip0x(receipt.sender.wallet.toUpperCase()) === strip0x(config.wallet.address.toUpperCase())
@@ -16,8 +18,6 @@ module.exports = {
         };
 
         try {
-            const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
-
             let receipts = await provider.getAllReceipts();
             if (!receipts.length)
                 receipts = [];
@@ -25,9 +25,11 @@ module.exports = {
             console.log(JSON.stringify(receipts));
         }
         catch (err) {
-            if (process.env.LOG_LEVEL === 'debug')
-                console.error(err);
+            dbg(err);
             throw new Error('Unable to show receipts for executed payments.');
+        }
+        finally {
+            provider.stopUpdate();
         }
     }
 };

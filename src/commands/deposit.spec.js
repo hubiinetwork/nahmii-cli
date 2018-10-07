@@ -21,17 +21,18 @@ const stubbedConfig = {
     privateKey: sinon.stub()
 };
 
-const stubbedProviderCtr = sinon.stub();
+const stubbedProviderConstructor = sinon.stub();
 
 const stubbedProvider = {
     getBlockNumber: sinon.stub(),
-    getApiAccessToken: sinon.stub()
+    getApiAccessToken: sinon.stub(),
+    stopUpdate: sinon.stub()
 };
 
 function proxyquireCommand() {
     return proxyquire('./deposit', {
         'nahmii-sdk': {
-            NahmiiProvider: stubbedProviderCtr,
+            NahmiiProvider: stubbedProviderConstructor,
             Wallet: function() {
                 return stubbedWallet;
             }
@@ -57,7 +58,7 @@ describe('Deposit command', () => {
         stubbedConfig.privateKey
             .withArgs(stubbedConfig.wallet.secret)
             .returns('privatekey');
-        stubbedProviderCtr
+        stubbedProviderConstructor
             .withArgs(stubbedConfig.apiRoot, stubbedConfig.appId, stubbedConfig.appSecret)
             .returns(stubbedProvider);
         stubbedProvider.getBlockNumber.resolves(1);
@@ -72,9 +73,10 @@ describe('Deposit command', () => {
         stubbedWallet.depositEth.reset();
         stubbedWallet.depositToken.reset();
         stubbedConfig.privateKey.reset();
-        stubbedProviderCtr.reset();
+        stubbedProviderConstructor.reset();
         stubbedProvider.getBlockNumber.reset();
         stubbedProvider.getApiAccessToken.reset();
+        stubbedProvider.stopUpdate.reset();
         console.log.restore();
     });
 
@@ -88,7 +90,7 @@ describe('Deposit command', () => {
         });
 
         it('tells wallet to deposit 1.1 ETH', () => {
-            expect(stubbedWallet.depositEth).to.have.been.calledWith('1.1', {gasLimit: 2})
+            expect(stubbedWallet.depositEth).to.have.been.calledWith('1.1', {gasLimit: 2});
         });
 
         it('outputs an single receipt to stdout', () => {
@@ -100,6 +102,10 @@ describe('Deposit command', () => {
                     href: `https://ropsten.etherscan.io/tx/${txReceipt1.transactionHash}`
                 }
             ]));
+        });
+
+        it('stops token refresh', () => {
+            expect(stubbedProvider.stopUpdate).to.have.been.called;
         });
     });
 
@@ -113,7 +119,7 @@ describe('Deposit command', () => {
         });
 
         it('tells wallet to deposit 0.07 TT1', () => {
-            expect(stubbedWallet.depositToken).to.have.been.calledWith('0.07', 'TT1', {gasLimit: 2})
+            expect(stubbedWallet.depositToken).to.have.been.calledWith('0.07', 'TT1', {gasLimit: 2});
         });
 
         it('outputs 2 receipts to stdout', () => {
@@ -132,6 +138,10 @@ describe('Deposit command', () => {
                 }
             ]));
         });
+
+        it('stops token refresh', () => {
+            expect(stubbedProvider.stopUpdate).to.have.been.called;
+        });
     });
 
     context('deposit foo ETH', () => {
@@ -144,6 +154,19 @@ describe('Deposit command', () => {
                 })
                 .catch(err => {
                     expect(err.message).to.match(/amount.*number/i);
+                    done();
+                });
+        });
+
+        it('provider was not instantiated', (done) => {
+            depositCmd.handler
+                .call(undefined, {
+                    amount: 'foo',
+                    currency: 'ETH',
+                    gas: 2
+                })
+                .catch(() => {
+                    expect(stubbedProviderConstructor).to.not.have.been.called;
                     done();
                 });
         });
@@ -162,10 +185,26 @@ describe('Deposit command', () => {
                     done();
                 });
         });
+
+        it('provider was not instantiated', (done) => {
+            depositCmd.handler
+                .call(undefined, {
+                    amount: '0',
+                    currency: 'ETH',
+                    gas: 2
+                })
+                .catch(() => {
+                    expect(stubbedProviderConstructor).to.not.have.been.called;
+                    done();
+                });
+        });
+
     });
 
     context('wallet fails to deposit ETH', () => {
-        it('yields an error', (done) => {
+        let error;
+
+        beforeEach((done) => {
             stubbedWallet.depositEth.reset();
             stubbedWallet.depositEth.rejects(new Error('transaction failed'));
             depositCmd.handler
@@ -175,17 +214,26 @@ describe('Deposit command', () => {
                     gas: 2
                 })
                 .catch(err => {
-                    expect(err.message).to.eql('transaction failed');
+                    error = err;
                     done();
                 });
+        });
+
+        it('yields an error', () => {
+            expect(error.message).to.match(/transaction failed/);
+        });
+
+        it('stops token refresh', () => {
+            expect(stubbedProvider.stopUpdate).to.have.been.called;
         });
     });
 
     context('wallet fails to deposit token', () => {
-        it('yields an error', (done) => {
+        let error;
+
+        beforeEach((done) => {
             stubbedWallet.depositToken.reset();
             stubbedWallet.depositToken.rejects(new Error('transaction failed'));
-
             depositCmd.handler
                 .call(undefined, {
                     amount: '1.2',
@@ -193,9 +241,17 @@ describe('Deposit command', () => {
                     gas: 2
                 })
                 .catch(err => {
-                    expect(err.message).to.eql('transaction failed');
+                    error = err;
                     done();
                 });
+        });
+
+        it('yields an error', () => {
+            expect(error.message).to.match(/transaction failed/);
+        });
+
+        it('stops token refresh', () => {
+            expect(stubbedProvider.stopUpdate).to.have.been.called;
         });
     });
 });

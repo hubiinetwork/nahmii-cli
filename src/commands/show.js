@@ -6,7 +6,7 @@ module.exports = {
     builder: yargs => {
         return yargs
             .commandDir('./show-commands', {exclude: /.*.spec.js$/})
-            .demandCommand()
+            .demandCommand();
     },
-    handler: async (argv) => {}
+    handler: async () => {}
 };

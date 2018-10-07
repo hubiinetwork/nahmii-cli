@@ -26,13 +26,22 @@ module.exports = {
         const provider = await new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
         const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
 
-        if (argv.currency.toUpperCase() === 'ETH') {
-            const receipt = await wallet.depositEth(amount, {gasLimit});
-            console.log(JSON.stringify([reduceReceipt(receipt)]));
+        try {
+            if (argv.currency.toUpperCase() === 'ETH') {
+                const receipt = await wallet.depositEth(amount, {gasLimit});
+                console.log(JSON.stringify([reduceReceipt(receipt)]));
+            }
+            else {
+                const receipts = await wallet.depositToken(argv.amount, argv.currency, {gasLimit});
+                console.log(JSON.stringify(receipts.map(reduceReceipt)));
+            }
         }
-        else {
-            const receipts = await wallet.depositToken(argv.amount, argv.currency, {gasLimit});
-            console.log(JSON.stringify(receipts.map(reduceReceipt)));
+        catch (err) {
+            dbg(err);
+            throw new Error(`Deposit failed: ${err.message}`);
+        }
+        finally {
+            provider.stopUpdate();
         }
     }
 };
@@ -42,7 +51,7 @@ function validateAmountIsPositiveDecimalNumber(amount) {
     try {
         amountBN = ethers.utils.parseEther(amount);
     }
-    catch(err) {
+    catch (err) {
         dbg(err);
         throw new TypeError('Amount must be a number!');
     }
