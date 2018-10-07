@@ -1,5 +1,6 @@
 'use strict';
 
+const dbg = require('../../dbg');
 const nahmii = require('nahmii-sdk');
 
 module.exports = {
@@ -16,9 +17,11 @@ module.exports = {
             console.log(JSON.stringify(balances));
         }
         catch (err) {
-            if (process.env.LOG_LEVEL === 'debug')
-                console.error(err);
+            dbg(err);
             throw new Error('Unable to retrieve the balance.');
+        }
+        finally {
+            provider.stopUpdate();
         }
     }
 };

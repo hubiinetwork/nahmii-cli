@@ -1,5 +1,6 @@
 'use strict';
 
+const dbg = require('../../dbg');
 const nahmii = require('nahmii-sdk');
 
 module.exports = {
@@ -7,10 +8,10 @@ module.exports = {
     describe: 'Show tokens supported by nahmii',
     builder: {},
     handler: async (argv) => {
-        try {
-            const config = require('../../config');
-            const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
+        const config = require('../../config');
+        const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
 
+        try {
             const supportedTokens = await provider.getSupportedTokens();
             if (supportedTokens.length) {
                 const result = JSON.stringify(supportedTokens.map(t => {
@@ -24,9 +25,11 @@ module.exports = {
             console.log([]);
         }
         catch (err) {
-            if (process.env.LOG_LEVEL === 'debug')
-                console.error(err);
+            dbg(err);
             throw new Error(`Unable to show supported tokens: ${err.message}`);
+        }
+        finally {
+            provider.stopUpdate();
         }
     }
 };

@@ -1,5 +1,6 @@
 'use strict';
 
+const dbg = require('../../dbg');
 const nahmii = require('nahmii-sdk');
 
 function isSameAddress(a, b) {
@@ -29,9 +30,11 @@ module.exports = {
             console.log(JSON.stringify(payments));
         }
         catch (err) {
-            if (process.env.LOG_LEVEL === 'debug')
-                console.error(err);
+            dbg(err);
             throw new Error('Unable to show pending payments.');
+        }
+        finally {
+            provider.stopUpdate();
         }
     }
 };
