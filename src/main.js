@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
-require('yargs')
+const argv = require('yargs')
     .commandDir('./commands', {exclude: /.*.spec.js$/})
     .fail((msg, err) => {
         if (err) {
@@ -16,4 +16,5 @@ require('yargs')
         process.exit(1);
     })
     .demandCommand()
-    .help();
+    .help()
+    .argv;
