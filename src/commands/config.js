@@ -30,5 +30,8 @@ module.exports = {
             dbg(err);
             throw new Error('Unable to connect to network! Check your configuration and network connection.');
         }
+        finally {
+            provider.stopUpdate();
+        }
     }
 };
