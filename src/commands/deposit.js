@@ -32,7 +32,6 @@ module.exports = {
             if (argv.currency.toUpperCase() === 'ETH') {
                 spinner.start('Waiting for transaction to be broadcast');
                 const { hash } = await wallet.depositEth(amount, {gasLimit});
-                console.log(hash);
                 spinner.succeed(`Transaction broadcast ${hash}`);
                 spinner.start('Waiting for transaction to be mined').start();
                 const receipt = await provider.getTransactionConfirmation(hash);
