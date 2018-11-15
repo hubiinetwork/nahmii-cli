@@ -46,14 +46,13 @@ module.exports = {
                 spinner.start('Waiting for transaction 1/2 to be mined').start();
                 const approveReceipt = await provider.getTransactionConfirmation(pendingApprovalTx.hash);
                 spinner.succeed('Transaction 1/2 mined');
-                console.log(JSON.stringify([reduceReceipt(approveReceipt)]));
                 spinner.start('Waiting for transaction 2/2 to be broadcast').start();
                 const pendingCompleteTx = await wallet.completeTokenDeposit(argv.amount, argv.currency, {gasLimit});
-                spinner.succeed(`Transaction 2/2 broadcast ${pendingApprovalTx.hash}`);
+                spinner.succeed(`Transaction 2/2 broadcast ${pendingCompleteTx.hash}`);
                 spinner.start('Waiting for transaction 2/2 to be mined').start();
                 const completeReceipt = await provider.getTransactionConfirmation(pendingCompleteTx.hash);
                 spinner.succeed('Transaction 2/2 mined');
-                console.log(JSON.stringify([reduceReceipt(completeReceipt)]));
+                console.log(JSON.stringify([reduceReceipt(approveReceipt), reduceReceipt(completeReceipt)]));
             }
         }
         catch (err) {

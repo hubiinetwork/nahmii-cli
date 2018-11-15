@@ -137,8 +137,14 @@ describe('Deposit command', () => {
             expect(stubbedWallet.completeTokenDeposit).to.have.been.calledWith('0.07', 'TT1', {gasLimit: 2});
         });
 
-        it('outputs complete tx receipt to stdout', () => {
+        it('outputs correct tx receipts to stdout', () => {
             expect(console.log).to.have.been.calledWith(JSON.stringify([
+                {
+                    transactionHash: txReceipt1.transactionHash,
+                    blockNumber: txReceipt1.blockNumber,
+                    gasUsed: '123',
+                    href: `https://ropsten.etherscan.io/tx/${txReceipt1.transactionHash}`
+                },
                 {
                     transactionHash: txReceipt2.transactionHash,
                     blockNumber: txReceipt2.blockNumber,
