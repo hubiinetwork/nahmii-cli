@@ -27,38 +27,38 @@ module.exports = {
         const provider = await new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
         const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
 
-        let curSpinner = ora();
+        let spinner = ora();
         try {
             if (argv.currency.toUpperCase() === 'ETH') {
-                curSpinner.start('Waiting for transaction to be broadcast');
+                spinner.start('Waiting for transaction to be broadcast');
                 const { hash } = await wallet.depositEth(amount, {gasLimit});
                 console.log(hash);
-                curSpinner.succeed(`Transaction broadcast ${hash}`);
-                curSpinner.start('Waiting for transaction to be mined').start();
+                spinner.succeed(`Transaction broadcast ${hash}`);
+                spinner.start('Waiting for transaction to be mined').start();
                 const receipt = await provider.getTransactionConfirmation(hash);
-                curSpinner.succeed('Transaction mined');
+                spinner.succeed('Transaction mined');
                 console.log(JSON.stringify([reduceReceipt(receipt)]));
             }
             else {
-                curSpinner = ora('Waiting for transaction 1/2 to be broadcast').start();
+                spinner = ora('Waiting for transaction 1/2 to be broadcast').start();
                 const pendingApprovalTx = await wallet.approveTokenDeposit(argv.amount, argv.currency, {gasLimit});
-                curSpinner.succeed(`Transaction 1/2 broadcast ${pendingApprovalTx.hash}`);
-                curSpinner.start('Waiting for transaction 1/2 to be mined').start();
+                spinner.succeed(`Transaction 1/2 broadcast ${pendingApprovalTx.hash}`);
+                spinner.start('Waiting for transaction 1/2 to be mined').start();
                 const approveReceipt = await provider.getTransactionConfirmation(pendingApprovalTx.hash);
-                curSpinner.succeed('Transaction 1/2 mined');
+                spinner.succeed('Transaction 1/2 mined');
                 console.log(JSON.stringify([reduceReceipt(approveReceipt)]));
-                curSpinner.start('Waiting for transaction 2/2 to be broadcast').start();
+                spinner.start('Waiting for transaction 2/2 to be broadcast').start();
                 const pendingCompleteTx = await wallet.completeTokenDeposit(argv.amount, argv.currency, {gasLimit});
-                curSpinner.succeed(`Transaction 2/2 broadcast ${pendingApprovalTx.hash}`);
-                curSpinner.start('Waiting for transaction 2/2 to be mined').start();
+                spinner.succeed(`Transaction 2/2 broadcast ${pendingApprovalTx.hash}`);
+                spinner.start('Waiting for transaction 2/2 to be mined').start();
                 const completeReceipt = await provider.getTransactionConfirmation(pendingCompleteTx.hash);
-                curSpinner.succeed('Transaction 2/2 mined');
+                spinner.succeed('Transaction 2/2 mined');
                 console.log(JSON.stringify([reduceReceipt(completeReceipt)]));
             }
         }
         catch (err) {
             dbg(err);
-            curSpinner.fail('Something went wrong');
+            spinner.fail('Something went wrong');
             throw new Error(`Deposit failed: ${err.message}`);
         }
         finally {
