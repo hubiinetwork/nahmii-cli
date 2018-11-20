@@ -14,7 +14,7 @@ module.exports = {
         yargs.example('deposit 1000 HBT', 'Deposits 1000 Hubiits (HBT) using default gas limit.');
         yargs.option('gas', {
             desc: 'Gas limit used _per transaction_. Deposits can be 1 or more transactions depending on the type of currency.',
-            default: 250000,
+            default: 600000,
             type: 'number'
         });
         yargs.coerce('amount', arg => arg); // Coerce it to remain a string
