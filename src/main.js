@@ -1,17 +1,19 @@
 #!/usr/bin/env node
 'use strict';
+const ora = require('ora');
+const spinner = ora()
 
 const argv = require('yargs')
     .commandDir('./commands', {exclude: /.*.spec.js$/})
     .fail((msg, err) => {
         if (err) {
             if (process.env.LOG_LEVEL === 'debug')
-                console.error(err.stack);
+                spinner.fail(err.stack);
             else
-                console.error('Error: ' + err.message);
+                spinner.fail('Error: ' + err.message);
         }
         else {
-            console.error(msg);
+            spinner.fail(msg);
         }
         process.exit(1);
     })
