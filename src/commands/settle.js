@@ -8,8 +8,11 @@ const ora = require('ora');
 
 module.exports = {
     command: 'settle <stageAmount> <currency>',
-    describe: 'Start settlement challenge',
-    builder: {},
+    describe: 'Start settlement challenges for <stageAmount> <currency> intended stage amount',
+    builder: yargs => {
+        yargs.example('settle 1 ETH', 'Start settlement challenges for 1 Ether intended stage amount');
+        yargs.example('settle 1000 HBT', 'Start settlement challenges for 1000 Hubiits (HBT) intended stage amount');
+    },
     handler: async (argv) => {
         const config = require('../config');
         const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
@@ -24,19 +27,23 @@ module.exports = {
             const settlement = new nahmii.Settlement(provider);
 
             spinner = ora('Starting new settlement challenges').start();
-            const txs = await settlement.startChallenge(amount, wallet)
+            const txs = await settlement.startChallenge(amount, wallet);
 
             spinner.info(`Started ${txs.length} settlement(s) challenge.`);
 
             for (let tx of txs) {
-                spinner.succeed(`Waiting for transaction to be mined; Settlement type:${tx.type}, hash:${tx.tx.hash}`).start();
-                await provider.getTransactionConfirmation(tx.tx.hash);
-                spinner.succeed(`Successfully started ${tx.type} settlement challenge`)
+                const {amount} = tx.intendedStageAmount.toJSON();
+                const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
+                spinner.info(`Challenge details: \n Settlement type:${tx.type}\n hash:${tx.tx.hash}\n intended stage amount:${formattedStageAmount}`);
+                spinner.start('Waiting for transaction to be mined').start();
+                const {gasUsed} = await provider.getTransactionConfirmation(tx.tx.hash);
+                spinner.succeed(`Successfully started ${tx.type} settlement challenge; used gas: ${ethers.utils.bigNumberify(gasUsed).toString()};`);
             }
 
-            spinner.succeed('Loading challenge details').start();
-            const challengeTime = await settlement.getMaxCurrentExpirationTime(wallet.address, tokenInfo.currency, 0)
-            spinner.succeed(`The end time for the challenges is ${moment(challengeTime).format('dddd, MMMM Do YYYY, h:mm:ss a')}`)
+            spinner.start('Loading details for the ongoing challenges').start();
+            const maxChallengeTime = await settlement.getMaxChallengesTimeout(wallet.address, tokenInfo.currency, 0);
+            if (maxChallengeTime) 
+                spinner.info(`The end time for the challenges is ${moment(maxChallengeTime).format('dddd, MMMM Do YYYY, h:mm:ss a')}`);
         }
         catch (err) {
             dbg(err);
@@ -44,6 +51,7 @@ module.exports = {
         }
         finally {
             spinner.stop();
+            provider.stopUpdate();
         }
     }
 };

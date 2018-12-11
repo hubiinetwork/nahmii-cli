@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 const ora = require('ora');
-const spinner = ora()
+const spinner = ora();
 
 const argv = require('yargs')
     .commandDir('./commands', {exclude: /.*.spec.js$/})
