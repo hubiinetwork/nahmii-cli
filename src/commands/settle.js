@@ -7,21 +7,22 @@ const moment = require('moment');
 const ora = require('ora');
 
 module.exports = {
-    command: 'settle <stageAmount> <currency>',
+    command: 'settle <stageAmount> <currency> [--gas=<gaslimit>]',
     describe: 'Start settlement challenges for <stageAmount> <currency> intended stage amount',
     builder: yargs => {
         yargs.example('settle 1 ETH', 'Start settlement challenges for 1 Ether intended stage amount');
         yargs.example('settle 1000 HBT', 'Start settlement challenges for 1000 Hubiits (HBT) intended stage amount');
     },
     handler: async (argv) => {
+        const { stageAmount, currency, gas } = argv;
         const config = require('../config');
         const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
-
-        const { stageAmount, currency } = argv;
-
+        
         let spinner = ora();
         try {
             const tokenInfo = await provider.getTokenInfo(currency);
+            const gasLimit = parseInt(gas) || null;
+
             const stageAmountBN = ethers.utils.parseUnits(stageAmount, tokenInfo.decimals);
             const stageMonetaryAmount = new nahmii.MonetaryAmount(stageAmountBN, tokenInfo.currency, 0);
             const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
@@ -42,7 +43,7 @@ module.exports = {
             }
 
             spinner = ora('Starting new settlement challenges').start();
-            const txs = await settlement.startChallenge(stageMonetaryAmount, wallet);
+            const txs = await settlement.startChallenge(stageMonetaryAmount, wallet, {gasLimit});
 
             spinner.info(`Started ${txs.length} settlement(s) challenge.`);
 
@@ -58,7 +59,7 @@ module.exports = {
             spinner.start('Loading details for the ongoing challenges').start();
             const maxChallengeTime = await settlement.getMaxChallengesTimeout(wallet.address, tokenInfo.currency, 0);
             if (maxChallengeTime) 
-                spinner.info(`The end time for the challenges is ${moment(maxChallengeTime).format('dddd, MMMM Do YYYY, h:mm:ss a')}`);
+                spinner.info(`The end time for the ongoing challenges is ${moment(maxChallengeTime).format('dddd, MMMM Do YYYY, h:mm:ss a')}`);
         }
         catch (err) {
             dbg(err);

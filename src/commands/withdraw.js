@@ -14,7 +14,7 @@ module.exports = {
     },
     handler: async (argv) => {
         const config = require('../config');
-        const {amount, currency} = argv;
+        const {amount, currency, gas} = argv;
 
         const provider = await new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
         const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
@@ -22,6 +22,8 @@ module.exports = {
         let spinner = ora();
         try {
             const tokenInfo = await provider.getTokenInfo(currency);
+            const gasLimit = parseInt(gas) || null;
+
             const withdrawAmountBN = ethers.utils.parseUnits(amount, tokenInfo.decimals);
             const withdrawMonetaryAmount = new nahmii.MonetaryAmount(withdrawAmountBN, tokenInfo.currency, 0);
             
@@ -33,7 +35,7 @@ module.exports = {
                 return;
             }
 
-            const request = await wallet.withdraw(withdrawMonetaryAmount);
+            const request = await wallet.withdraw(withdrawMonetaryAmount, {gasLimit});
             spinner.succeed(`Transaction broadcast ${request.hash}`);
             spinner.start('Waiting for transaction to be mined').start();
             const txReceipt = await provider.getTransactionConfirmation(request.hash);

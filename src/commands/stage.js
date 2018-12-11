@@ -7,25 +7,27 @@ const ora = require('ora');
 const moment = require('moment');
 
 module.exports = {
-    command: 'stage <currency>',
+    command: 'stage <currency>  [--gas=<gaslimit>]',
     describe: 'Stage all qualified settlement challenges for <currency>',
     builder: yargs => {
         yargs.example('stage ETH', 'Stage all settlement challenges for <currency>');
         yargs.example('stage HBT', 'Stage all settlement challenges for <currency>');
     },
     handler: async (argv) => {
+        const { currency, gas } = argv;
+
         const config = require('../config');
         const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
-
-        const { currency } = argv;
 
         let spinner = ora();
         try {
             const tokenInfo = await provider.getTokenInfo(currency);
+            const gasLimit = parseInt(gas) || null;
+
             let wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
             const settlement = new nahmii.Settlement(provider);
             spinner = ora('Settling qualified challenges').start();
-            const txs = await settlement.settle(tokenInfo.currency, 0, wallet);
+            const txs = await settlement.settle(tokenInfo.currency, 0, wallet, {gasLimit});
             if (!txs.length) {
                 spinner.warn('There are no valid qualified challenges to stage the balance.');
                 spinner.start('Checking ongoing challenges.').start();
