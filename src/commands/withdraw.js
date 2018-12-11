@@ -22,9 +22,18 @@ module.exports = {
         let spinner = ora();
         try {
             const tokenInfo = await provider.getTokenInfo(currency);
-            const monetaryAmount = new nahmii.MonetaryAmount(ethers.utils.parseUnits(amount, tokenInfo.decimals), tokenInfo.currency, 0);
+            const withdrawAmountBN = ethers.utils.parseUnits(amount, tokenInfo.decimals);
+            const withdrawMonetaryAmount = new nahmii.MonetaryAmount(withdrawAmountBN, tokenInfo.currency, 0);
+            
             spinner.start('Waiting for transaction to be broadcast').start();
-            const request = await wallet.withdraw(monetaryAmount);
+            const stagedBalanceBN = await wallet.getNahmiiStagedBalance(tokenInfo.currency);
+
+            if (withdrawAmountBN.gt(stagedBalanceBN)) {
+                spinner.fail(`The maximum withdrawal nahmii balance is ${ethers.utils.formatUnits(stagedBalanceBN, tokenInfo.decimals)}`);
+                return;
+            }
+
+            const request = await wallet.withdraw(withdrawMonetaryAmount);
             spinner.succeed(`Transaction broadcast ${request.hash}`);
             spinner.start('Waiting for transaction to be mined').start();
             const txReceipt = await provider.getTransactionConfirmation(request.hash);

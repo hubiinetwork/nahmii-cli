@@ -22,12 +22,27 @@ module.exports = {
         let spinner = ora();
         try {
             const tokenInfo = await provider.getTokenInfo(currency);
-            const amount = new nahmii.MonetaryAmount(ethers.utils.parseUnits(stageAmount, tokenInfo.decimals), tokenInfo.currency, 0);
+            const stageAmountBN = ethers.utils.parseUnits(stageAmount, tokenInfo.decimals);
+            const stageMonetaryAmount = new nahmii.MonetaryAmount(stageAmountBN, tokenInfo.currency, 0);
             const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
             const settlement = new nahmii.Settlement(provider);
 
+            const balances = await wallet.getNahmiiBalance();
+            const balance = balances[currency];
+            if (!balance) {
+                spinner.fail(`No nahmii balance available for ${currency}`);
+                return;
+            }
+
+            const balanceBN = ethers.utils.parseUnits(balance, tokenInfo.decimals);
+
+            if (balanceBN.lt(stageAmountBN)) {
+                spinner.fail(`The maximum settleable nahmii balance is ${balance}`);
+                return;
+            }
+
             spinner = ora('Starting new settlement challenges').start();
-            const txs = await settlement.startChallenge(amount, wallet);
+            const txs = await settlement.startChallenge(stageMonetaryAmount, wallet);
 
             spinner.info(`Started ${txs.length} settlement(s) challenge.`);
 
