@@ -47,9 +47,9 @@ module.exports = {
                 return;
             }
             
-            let totalIntendedStageAmount = txs.reduce((cum, tx) => {
+            let totalIntendedStageAmount = txs.reduce((accumulator, tx) => {
                 const amount = ethers.utils.bigNumberify(tx.intendedStageAmount.toJSON().amount);
-                return cum.add(amount);
+                return accumulator.add(amount);
             }, ethers.utils.bigNumberify(0));
             totalIntendedStageAmount = ethers.utils.formatUnits(totalIntendedStageAmount, tokenInfo.decimals);
 
