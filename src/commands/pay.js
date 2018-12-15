@@ -12,6 +12,7 @@ module.exports = {
     handler: async (argv) => {
         const config = require('../config');
         const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
+        const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
 
         try {
             const currencyDefinition = await getCurrencyBySymbol(provider, argv.currency);
@@ -21,11 +22,8 @@ module.exports = {
             const recipient = prefix0x(argv.recipient);
             const sender = prefix0x(config.wallet.address);
 
-            const payment = new nahmii.Payment(amount, sender, recipient, provider);
-
-            const secret = config.wallet.secret;
-            const privateKey = config.privateKey(secret);
-            payment.sign(privateKey);
+            const payment = new nahmii.Payment(amount, sender, recipient, wallet);
+            await payment.sign();
 
             const response = await payment.register();
             console.log(JSON.stringify(response));

@@ -31,6 +31,13 @@ const stubbedProvider = {
     getTransactionConfirmation: sinon.stub()
 };
 
+const stubbedOra = {
+    start: sinon.stub(),
+    succeed: sinon.stub(),
+    fail: sinon.stub()
+};
+stubbedOra.start.returns(stubbedOra);
+
 function proxyquireCommand() {
     return proxyquire('./deposit', {
         'nahmii-sdk': {
@@ -39,7 +46,10 @@ function proxyquireCommand() {
                 return stubbedWallet;
             }
         },
-        '../config': stubbedConfig
+        '../config': stubbedConfig,
+        'ora': function() {
+            return stubbedOra;
+        }
     });
 }
 
@@ -217,7 +227,7 @@ describe('Deposit command', () => {
     });
 
     [
-        stubbedProvider.getTransactionConfirmation, 
+        stubbedProvider.getTransactionConfirmation,
         stubbedWallet.depositEth
     ].forEach((depositFunc)=> {
         context('wallet fails to deposit ETH', () => {
@@ -249,8 +259,8 @@ describe('Deposit command', () => {
     });
 
     [
-        stubbedProvider.getTransactionConfirmation, 
-        stubbedWallet.approveTokenDeposit, 
+        stubbedProvider.getTransactionConfirmation,
+        stubbedWallet.approveTokenDeposit,
         stubbedWallet.completeTokenDeposit
     ].forEach((tokenDepositFunc)=> {
         context('wallet fails to deposit a token', () => {

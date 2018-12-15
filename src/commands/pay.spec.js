@@ -40,6 +40,8 @@ const stubbedProvider = {
     stopUpdate: sinon.stub()
 };
 
+const stubbedWallet = {};
+
 function proxyquireCommand() {
     return proxyquire('./pay', {
         'nahmii-sdk': {
@@ -47,6 +49,9 @@ function proxyquireCommand() {
                 return stubbedProvider;
             },
             Payment: stubbedPayment,
+            Wallet: function() {
+                return stubbedWallet;
+            },
             MonetaryAmount: stubbedMonetaryAmount,
             utils: require('nahmii-sdk').utils
         },
@@ -64,6 +69,7 @@ describe('Pay command', () => {
             sign: sinon.stub(),
             register: sinon.stub()
         };
+        fakePayment.sign.resolves();
         fakePayment.register.resolves(registeredPayment);
         fakeMoney = {};
     });
@@ -93,7 +99,7 @@ describe('Pay command', () => {
                     fakeMoney,
                     walletID2,
                     walletID,
-                    stubbedProvider
+                    stubbedWallet
                 )
                 .returns(fakePayment);
             stubbedConfig.privateKey
@@ -106,8 +112,8 @@ describe('Pay command', () => {
             });
         });
 
-        it('signs the payment given secret from configuration', () => {
-            expect(fakePayment.sign).to.have.been.calledWith(expectedPrivateKey);
+        it('signs the payment', () => {
+            expect(fakePayment.sign).to.have.been.calledOnce;
         });
 
         it('registers payment with API', () => {
@@ -137,7 +143,7 @@ describe('Pay command', () => {
                     fakeMoney,
                     walletID2,
                     walletID,
-                    stubbedProvider
+                    stubbedWallet
                 ).returns(fakePayment);
             stubbedConfig.privateKey
                 .withArgs(stubbedConfig.wallet.secret)
@@ -149,8 +155,8 @@ describe('Pay command', () => {
             });
         });
 
-        it('signs the payment given secret from configuration', () => {
-            expect(fakePayment.sign).to.have.been.calledWith(expectedPrivateKey);
+        it('signs the payment', () => {
+            expect(fakePayment.sign).to.have.been.calledOnce;
         });
 
         it('registers payment with API', () => {
