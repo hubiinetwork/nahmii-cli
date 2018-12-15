@@ -90,10 +90,10 @@ describe('Pay command', () => {
                 .returns(fakeMoney);
             stubbedPayment
                 .withArgs(
-                    stubbedProvider,
                     fakeMoney,
                     walletID2,
-                    walletID
+                    walletID,
+                    stubbedProvider
                 )
                 .returns(fakePayment);
             stubbedConfig.privateKey
@@ -134,10 +134,10 @@ describe('Pay command', () => {
 
             stubbedPayment
                 .withArgs(
-                    stubbedProvider,
                     fakeMoney,
                     walletID2,
-                    walletID
+                    walletID,
+                    stubbedProvider
                 ).returns(fakePayment);
             stubbedConfig.privateKey
                 .withArgs(stubbedConfig.wallet.secret)

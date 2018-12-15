@@ -21,7 +21,7 @@ module.exports = {
             const recipient = prefix0x(argv.recipient);
             const sender = prefix0x(config.wallet.address);
 
-            const payment = new nahmii.Payment(provider, amount, sender, recipient);
+            const payment = new nahmii.Payment(amount, sender, recipient, provider);
 
             const secret = config.wallet.secret;
             const privateKey = config.privateKey(secret);
