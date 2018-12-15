@@ -59,7 +59,7 @@ module.exports = {
             spinner.start('Loading details for the ongoing challenges').start();
             const maxChallengeTime = await settlement.getMaxChallengesTimeout(wallet.address, tokenInfo.currency, 0);
             if (maxChallengeTime) 
-                spinner.info(`The end time for the ongoing challenges is ${moment(maxChallengeTime).format('dddd, MMMM Do YYYY, h:mm:ss a')}`);
+                spinner.info(`The end time for the ongoing challenges is ${moment(maxChallengeTime).toISOString()}`);
         }
         catch (err) {
             dbg(err);

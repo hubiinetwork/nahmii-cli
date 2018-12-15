@@ -42,7 +42,7 @@ module.exports = {
                     const {type, expirationTime, intendedStageAmount} = ongoingChallenge;
                     const {amount} = intendedStageAmount.toJSON();
                     const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
-                    spinner.info(`Settlement type: ${type}; Stage amount: ${formattedStageAmount}; Expiration time: ${moment(expirationTime).format('dddd, MMMM Do YYYY, h:mm:ss a')}`);
+                    spinner.info(`Settlement type: ${type}; Stage amount: ${formattedStageAmount}; Expiration time: ${moment(expirationTime).toISOString()}`);
                 }
                 return;
             }
