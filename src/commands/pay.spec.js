@@ -13,6 +13,7 @@ const walletID2 = '0x1234567890123456789012345678901234567891';
 
 const stubbedPayment = sinon.stub();
 const stubbedMonetaryAmount = sinon.stub();
+const stubbedWallet = sinon.stub();
 
 const testCurrency = {
     hbt: {
@@ -46,6 +47,7 @@ function proxyquireCommand() {
             NahmiiProvider: function() {
                 return stubbedProvider;
             },
+            Wallet: stubbedWallet,
             Payment: stubbedPayment,
             MonetaryAmount: stubbedMonetaryAmount,
             utils: require('nahmii-sdk').utils
@@ -56,7 +58,7 @@ function proxyquireCommand() {
 
 describe('Pay command', () => {
     const registeredPayment = {expected: 'payment registration'};
-    let fakePayment, fakeMoney;
+    let fakePayment, fakeMoney, fakeWallet;
 
     beforeEach(() => {
         sinon.stub(console, 'log');
@@ -66,6 +68,7 @@ describe('Pay command', () => {
         };
         fakePayment.register.resolves(registeredPayment);
         fakeMoney = {};
+        fakeWallet = {};
     });
 
     afterEach(() => {
@@ -82,6 +85,12 @@ describe('Pay command', () => {
         beforeEach(async () => {
             let cmd = proxyquireCommand().handler;
             stubbedProvider.getSupportedTokens.resolves([testCurrency.hbt, testCurrency.wtf]);
+            stubbedWallet
+                .withArgs(
+                    expectedPrivateKey,
+                    stubbedProvider
+                )
+                .returns(fakeWallet);
             stubbedMonetaryAmount
                 .withArgs(
                     (1000 * 10 ** testCurrency.hbt.decimals).toString(),
@@ -90,10 +99,10 @@ describe('Pay command', () => {
                 .returns(fakeMoney);
             stubbedPayment
                 .withArgs(
-                    stubbedProvider,
                     fakeMoney,
                     walletID2,
-                    walletID
+                    walletID,
+                    fakeWallet,
                 )
                 .returns(fakePayment);
             stubbedConfig.privateKey
@@ -132,12 +141,18 @@ describe('Pay command', () => {
                 .withArgs('1100000000000000000', '0x' + '00'.repeat(20),)
                 .returns(fakeMoney);
 
+            stubbedWallet
+                .withArgs(
+                    expectedPrivateKey,
+                    stubbedProvider
+                )
+                .returns(fakeWallet);
             stubbedPayment
                 .withArgs(
-                    stubbedProvider,
                     fakeMoney,
                     walletID2,
-                    walletID
+                    walletID,
+                    fakeWallet
                 ).returns(fakePayment);
             stubbedConfig.privateKey
                 .withArgs(stubbedConfig.wallet.secret)

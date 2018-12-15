@@ -17,11 +17,12 @@ module.exports = {
             const currencyDefinition = await getCurrencyBySymbol(provider, argv.currency);
             const currency = prefix0x(currencyDefinition.currency);
 
+            const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
             const amount = new nahmii.MonetaryAmount(ethers.utils.parseUnits(argv.amount, currencyDefinition.decimals).toString(), currency);
             const recipient = prefix0x(argv.recipient);
             const sender = prefix0x(config.wallet.address);
 
-            const payment = new nahmii.Payment(provider, amount, sender, recipient);
+            const payment = new nahmii.Payment(amount, sender, recipient, wallet);
 
             const secret = config.wallet.secret;
             const privateKey = config.privateKey(secret);
