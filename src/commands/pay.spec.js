@@ -13,7 +13,6 @@ const walletID2 = '0x1234567890123456789012345678901234567891';
 
 const stubbedPayment = sinon.stub();
 const stubbedMonetaryAmount = sinon.stub();
-const stubbedWallet = sinon.stub();
 
 const testCurrency = {
     hbt: {
@@ -41,14 +40,18 @@ const stubbedProvider = {
     stopUpdate: sinon.stub()
 };
 
+const stubbedWallet = {};
+
 function proxyquireCommand() {
     return proxyquire('./pay', {
         'nahmii-sdk': {
             NahmiiProvider: function() {
                 return stubbedProvider;
             },
-            Wallet: stubbedWallet,
             Payment: stubbedPayment,
+            Wallet: function() {
+                return stubbedWallet;
+            },
             MonetaryAmount: stubbedMonetaryAmount,
             utils: require('nahmii-sdk').utils
         },
@@ -58,7 +61,7 @@ function proxyquireCommand() {
 
 describe('Pay command', () => {
     const registeredPayment = {expected: 'payment registration'};
-    let fakePayment, fakeMoney, fakeWallet;
+    let fakePayment, fakeMoney;
 
     beforeEach(() => {
         sinon.stub(console, 'log');
@@ -66,9 +69,9 @@ describe('Pay command', () => {
             sign: sinon.stub(),
             register: sinon.stub()
         };
+        fakePayment.sign.resolves();
         fakePayment.register.resolves(registeredPayment);
         fakeMoney = {};
-        fakeWallet = {};
     });
 
     afterEach(() => {
@@ -85,12 +88,6 @@ describe('Pay command', () => {
         beforeEach(async () => {
             let cmd = proxyquireCommand().handler;
             stubbedProvider.getSupportedTokens.resolves([testCurrency.hbt, testCurrency.wtf]);
-            stubbedWallet
-                .withArgs(
-                    expectedPrivateKey,
-                    stubbedProvider
-                )
-                .returns(fakeWallet);
             stubbedMonetaryAmount
                 .withArgs(
                     (1000 * 10 ** testCurrency.hbt.decimals).toString(),
@@ -102,7 +99,7 @@ describe('Pay command', () => {
                     fakeMoney,
                     walletID2,
                     walletID,
-                    fakeWallet,
+                    stubbedWallet
                 )
                 .returns(fakePayment);
             stubbedConfig.privateKey
@@ -115,8 +112,8 @@ describe('Pay command', () => {
             });
         });
 
-        it('signs the payment given secret from configuration', () => {
-            expect(fakePayment.sign).to.have.been.calledWith(expectedPrivateKey);
+        it('signs the payment', () => {
+            expect(fakePayment.sign).to.have.been.calledOnce;
         });
 
         it('registers payment with API', () => {
@@ -141,18 +138,12 @@ describe('Pay command', () => {
                 .withArgs('1100000000000000000', '0x' + '00'.repeat(20),)
                 .returns(fakeMoney);
 
-            stubbedWallet
-                .withArgs(
-                    expectedPrivateKey,
-                    stubbedProvider
-                )
-                .returns(fakeWallet);
             stubbedPayment
                 .withArgs(
                     fakeMoney,
                     walletID2,
                     walletID,
-                    fakeWallet
+                    stubbedWallet
                 ).returns(fakePayment);
             stubbedConfig.privateKey
                 .withArgs(stubbedConfig.wallet.secret)
@@ -164,8 +155,8 @@ describe('Pay command', () => {
             });
         });
 
-        it('signs the payment given secret from configuration', () => {
-            expect(fakePayment.sign).to.have.been.calledWith(expectedPrivateKey);
+        it('signs the payment', () => {
+            expect(fakePayment.sign).to.have.been.calledOnce;
         });
 
         it('registers payment with API', () => {
