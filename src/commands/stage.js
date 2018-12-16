@@ -42,7 +42,7 @@ module.exports = {
                     const {type, expirationTime, intendedStageAmount} = ongoingChallenge;
                     const {amount} = intendedStageAmount.toJSON();
                     const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
-                    spinner.info(`Settlement type: ${type}; Stage amount: ${formattedStageAmount}; Expiration time: ${moment(expirationTime).toISOString()}`);
+                    spinner.info(`type: ${type}; Stage amount: ${formattedStageAmount}; Expiration time: ${moment(expirationTime).toISOString()}`);
                 }
                 return;
             }
@@ -54,10 +54,11 @@ module.exports = {
             totalIntendedStageAmount = ethers.utils.formatUnits(totalIntendedStageAmount, tokenInfo.decimals);
 
             spinner.info(`There are ${txs.length} settlement(s) ready to be staged with total stage amount ${totalIntendedStageAmount}`);
-            for (let tx of txs) {
-                spinner.start('Waiting for transaction to be mined').start();
-                const {gasUsed} = await provider.getTransactionConfirmation(tx.tx.hash);
-                spinner.succeed(`Staged ${tx.type} settlement challenge; used gas: ${ethers.utils.bigNumberify(gasUsed).toString()};`);
+            for (let confirmedTx of txs) {
+                const {amount} = confirmedTx.intendedStageAmount.toJSON();
+                const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
+                spinner.info(`Settlement details: \n hash: ${confirmedTx.tx.transactionHash}\n amount: ${formattedStageAmount}`);
+                spinner.succeed(`Updated stage balance(max withdrawal amount) using the qualified ${confirmedTx.type} settlement. [used gas: ${ethers.utils.bigNumberify(confirmedTx.tx.gasUsed).toString()}]`);
             }
         }
         catch (err) {

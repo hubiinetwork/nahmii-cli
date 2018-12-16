@@ -47,13 +47,11 @@ module.exports = {
 
             spinner.info(`Started ${txs.length} settlement(s) challenge.`);
 
-            for (let tx of txs) {
-                const {amount} = tx.intendedStageAmount.toJSON();
+            for (let confirmedTx of txs) {
+                const {amount} = confirmedTx.intendedStageAmount.toJSON();
                 const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
-                spinner.info(`Challenge details: \n Settlement type:${tx.type}\n hash:${tx.tx.hash}\n intended stage amount:${formattedStageAmount}`);
-                spinner.start('Waiting for transaction to be mined').start();
-                const {gasUsed} = await provider.getTransactionConfirmation(tx.tx.hash);
-                spinner.succeed(`Successfully started ${tx.type} settlement challenge; used gas: ${ethers.utils.bigNumberify(gasUsed).toString()};`);
+                spinner.info(`Challenge details: \n type: ${confirmedTx.type}\n hash: ${confirmedTx.tx.transactionHash}\n amount: ${formattedStageAmount}`);
+                spinner.succeed(`Successfully started ${confirmedTx.type} settlement challenge. [used gas: ${ethers.utils.bigNumberify(confirmedTx.tx.gasUsed).toString()}]`);
             }
 
             spinner.start('Loading details for the ongoing challenges').start();
@@ -63,7 +61,8 @@ module.exports = {
         }
         catch (err) {
             dbg(err);
-            throw new Error('Unable to start settlement challenge.');
+            const possibleCauses = 'It could be caused by the fact that the nahmii balance has not yet been synchronized with the latest states of the contracts.';
+            throw new Error(`Unable to start settlement challenge. Please try again few minutes later. [${possibleCauses}]`);
         }
         finally {
             spinner.stop();
