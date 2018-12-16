@@ -63,7 +63,7 @@ module.exports = {
         }
         catch (err) {
             dbg(err);
-            throw new Error('Unable to start settlement challenge.');
+            throw new Error(`Unable to stage settlement: ${err.message}`);
         }
         finally {
             spinner.stop();

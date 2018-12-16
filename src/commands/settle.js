@@ -61,8 +61,7 @@ module.exports = {
         }
         catch (err) {
             dbg(err);
-            const possibleCauses = 'It could be caused by the fact that the nahmii balance has not yet been synchronized with the latest states of the contracts.';
-            throw new Error(`Unable to start settlement challenge. Please try again few minutes later. [${possibleCauses}]`);
+            throw new Error(`Unable to start settlement challenge: ${err.message}`);
         }
         finally {
             spinner.stop();
