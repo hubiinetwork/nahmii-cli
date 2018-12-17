@@ -29,7 +29,7 @@ module.exports = {
             spinner = ora('Settling qualified challenges').start();
             const txs = await settlement.settle(tokenInfo.currency, 0, wallet, {gasLimit});
             if (!txs.length) {
-                spinner.warn('There are no valid qualified challenges to stage the balance.');
+                spinner.warn('There are no qualified challenges to stage the balance.');
                 spinner.start('Checking ongoing challenges.').start();
                 const ongoingChallenges = await settlement.getOngoingChallenges(wallet.address, tokenInfo.currency, 0);
                 if (!ongoingChallenges.length) {
