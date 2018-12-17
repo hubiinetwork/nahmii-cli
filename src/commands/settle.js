@@ -42,16 +42,19 @@ module.exports = {
                 return;
             }
 
-            spinner = ora('Starting new settlement challenges').start();
-            const txs = await settlement.startChallenge(stageMonetaryAmount, wallet, {gasLimit});
+            spinner = ora('Calculating the required settlement challenges for the intended stage amount').start();
+            const requiredChallenges = await settlement.getRequiredChallengesForIntendedStageAmount(stageMonetaryAmount, wallet.address);
+            spinner.info(`Need to start ${requiredChallenges.length} settlement(s) challenge.`);
 
-            spinner.info(`Started ${txs.length} settlement(s) challenge.`);
-
-            for (let confirmedTx of txs) {
-                const {amount} = confirmedTx.intendedStageAmount.toJSON();
+            for (let requiredChallenge of requiredChallenges) {
+                const {type, stageMonetaryAmount} = requiredChallenge;
+                const {amount} = stageMonetaryAmount.toJSON();
                 const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
-                spinner.info(`Challenge details: \n type: ${confirmedTx.type}\n hash: ${confirmedTx.tx.transactionHash}\n amount: ${formattedStageAmount}`);
-                spinner.succeed(`Successfully started ${confirmedTx.type} settlement challenge. [used gas: ${ethers.utils.bigNumberify(confirmedTx.tx.gasUsed).toString()}]`);
+                spinner.info(`Starting ${type} settlement challenge with stage amount ${formattedStageAmount} ${currency}.`);
+                const currentTx = await settlement.startByRequiredChallenge(requiredChallenge, wallet, {gasLimit});
+                spinner.start(`Waiting for transaction ${currentTx.hash} to be mined`).start();
+                const txReceipt = await provider.getTransactionConfirmation(currentTx.hash, 300);
+                spinner.succeed(`Successfully started settlement challenge: ${currentTx.hash} [gas used: ${ethers.utils.bigNumberify(txReceipt.gasUsed).toString()}]`);
             }
 
             spinner.start('Loading details for the ongoing challenges').start();

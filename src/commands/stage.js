@@ -27,8 +27,9 @@ module.exports = {
             let wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
             const settlement = new nahmii.Settlement(provider);
             spinner = ora('Settling qualified challenges').start();
-            const txs = await settlement.settle(tokenInfo.currency, 0, wallet, {gasLimit});
-            if (!txs.length) {
+
+            const settleableChallenges = await settlement.getSettleableChallenges(wallet.address, tokenInfo.currency, 0);
+            if (!settleableChallenges.length) {
                 spinner.warn('There are no qualified challenges to stage the balance.');
                 spinner.start('Checking ongoing challenges.').start();
                 const ongoingChallenges = await settlement.getOngoingChallenges(wallet.address, tokenInfo.currency, 0);
@@ -46,19 +47,27 @@ module.exports = {
                 }
                 return;
             }
-            
-            let totalIntendedStageAmount = txs.reduce((accumulator, tx) => {
+
+            let totalIntendedStageAmount = settleableChallenges.reduce((accumulator, tx) => {
                 const amount = ethers.utils.bigNumberify(tx.intendedStageAmount.toJSON().amount);
                 return accumulator.add(amount);
             }, ethers.utils.bigNumberify(0));
             totalIntendedStageAmount = ethers.utils.formatUnits(totalIntendedStageAmount, tokenInfo.decimals);
 
-            spinner.info(`There are ${txs.length} settlement(s) ready to be staged with total stage amount ${totalIntendedStageAmount}`);
-            for (let confirmedTx of txs) {
-                const {amount} = confirmedTx.intendedStageAmount.toJSON();
+            spinner.info(`There are ${settleableChallenges.length} settlement(s) ready to be staged with total stage amount ${totalIntendedStageAmount}`);
+
+            for (let settleableChallenge of settleableChallenges) {
+                const {type, intendedStageAmount} = settleableChallenge;
+                const {amount} = intendedStageAmount.toJSON();
                 const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
-                spinner.info(`Settlement details: \n hash: ${confirmedTx.tx.transactionHash}\n amount: ${formattedStageAmount}`);
-                spinner.succeed(`Updated stage balance(max withdrawal amount) using the qualified ${confirmedTx.type} settlement. [used gas: ${ethers.utils.bigNumberify(confirmedTx.tx.gasUsed).toString()}]`);
+                spinner.info(`Starting ${type} settlement challenge with stage amount ${formattedStageAmount} ${currency}.`);
+
+                const currentTx = await settlement.settleBySettleableChallenge(settleableChallenge, wallet, {gasLimit});
+                spinner.start(`Waiting for transaction ${currentTx.hash} to be mined`).start();
+
+                const txReceipt = await provider.getTransactionConfirmation(currentTx.hash, 300);
+                spinner.succeed(`Updated stage balance(max withdrawal amount). [used gas: ${ethers.utils.bigNumberify(txReceipt.gasUsed).toString()}]`);
+
             }
         }
         catch (err) {
