@@ -43,18 +43,27 @@ module.exports = {
             }
 
             spinner = ora('Calculating the required settlement challenges for the intended stage amount').start();
-            const requiredChallenges = await settlement.getRequiredChallengesForIntendedStageAmount(stageMonetaryAmount, wallet.address);
-            spinner.info(`Need to start ${requiredChallenges.length} settlement(s) challenge.`);
+            const {requiredChallenges, invalidReasons} = await settlement.getRequiredChallengesForIntendedStageAmount(stageMonetaryAmount, wallet.address);
+            invalidReasons.forEach(challenge => {
+                dbg(`\ncan not settle for type: ${challenge.type}`);
+                challenge.reasons.forEach(reason => dbg('reason:', reason));
+            });
 
-            for (let requiredChallenge of requiredChallenges) {
-                const {type, stageMonetaryAmount} = requiredChallenge;
-                const {amount} = stageMonetaryAmount.toJSON();
-                const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
-                spinner.info(`Starting ${type} settlement challenge with stage amount ${formattedStageAmount} ${currency}.`);
-                const currentTx = await settlement.startByRequiredChallenge(requiredChallenge, wallet, {gasLimit});
-                spinner.start(`Waiting for transaction ${currentTx.hash} to be mined`).start();
-                const txReceipt = await provider.getTransactionConfirmation(currentTx.hash, 300);
-                spinner.succeed(`Successfully started settlement challenge: ${currentTx.hash} [gas used: ${ethers.utils.bigNumberify(txReceipt.gasUsed).toString()}]`);
+            if (requiredChallenges.length) {
+                spinner.info(`Need to start ${requiredChallenges.length} settlement(s) challenge.`);
+    
+                for (let requiredChallenge of requiredChallenges) {
+                    const {type, stageMonetaryAmount} = requiredChallenge;
+                    const {amount} = stageMonetaryAmount.toJSON();
+                    const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
+                    spinner.info(`Starting ${type} settlement challenge with stage amount ${formattedStageAmount} ${currency}.`);
+                    const currentTx = await settlement.startByRequiredChallenge(requiredChallenge, wallet, {gasLimit});
+                    spinner.start(`Waiting for transaction ${currentTx.hash} to be mined`).start();
+                    const txReceipt = await provider.getTransactionConfirmation(currentTx.hash, 300);
+                    spinner.succeed(`Successfully started settlement challenge: ${currentTx.hash} [gas used: ${ethers.utils.bigNumberify(txReceipt.gasUsed).toString()}]`);
+                }
+            } else {
+                spinner.warn('Can not start new challenges. Please check if the ongoing challenges have expired.');
             }
 
             spinner.start('Loading details for the ongoing challenges').start();

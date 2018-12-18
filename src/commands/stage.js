@@ -28,9 +28,14 @@ module.exports = {
             const settlement = new nahmii.Settlement(provider);
             spinner = ora('Settling qualified challenges').start();
 
-            const settleableChallenges = await settlement.getSettleableChallenges(wallet.address, tokenInfo.currency, 0);
+            const {settleableChallenges, invalidReasons} = await settlement.getSettleableChallenges(wallet.address, tokenInfo.currency, 0);
+            invalidReasons.forEach(challenge => {
+                dbg(`\ncan not stage for type: ${challenge.type}`);
+                challenge.reasons.forEach(reason => dbg('reason:', reason));
+            });
+
             if (!settleableChallenges.length) {
-                spinner.warn('There are no qualified challenges to stage the balance.');
+                spinner.warn('There are no qualified challenges to stage the balance. Please check if the ongoing challenges have expired.');
                 spinner.start('Checking ongoing challenges.').start();
                 const ongoingChallenges = await settlement.getOngoingChallenges(wallet.address, tokenInfo.currency, 0);
                 if (!ongoingChallenges.length) {
