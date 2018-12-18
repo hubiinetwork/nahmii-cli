@@ -13,11 +13,11 @@ module.exports = {
         console.log(`Using configuration from ${config.file}:`);
         console.log(`\tapiRoot: ${config.apiRoot}`);
         console.log(`\tappId: ${config.appId}`);
-        console.log(`\tappSecret: ${'*'.repeat(config.appSecret.length ? 20: 0)}`);
+        console.log(`\tappSecret: ${'*'.repeat(config.appSecret.length ? 20 : 0)}`);
         console.log(`\twallet address: ${config.wallet.address}`);
         console.log(`\twallet secret: ${'*'.repeat(config.wallet.secret.length ? 20 : 0)}`);
 
-        const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
+        const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
 
         try {
             await Promise.all([

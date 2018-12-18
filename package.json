@@ -1,13 +1,18 @@
 {
   "name": "nahmii-cli",
-  "version": "1.0.0-beta.16",
+  "version": "1.0.0-beta.17",
   "description": "CLI interface for using the nahmii by hubii protocol",
   "main": "index.js",
   "scripts": {
     "test": "nyc mocha \"src/**/*.spec.js\"",
-    "test:watch": "nyc mocha --watch \"src/**/*.spec.js\"",
-    "lint": "eslint --ignore-path .gitignore --fix ."
+    "test:watch": "npm run test -- --watch",
+    "lint": "eslint --ignore-path .gitignore .",
+    "lint:fix": "npm run lint -- --fix"
   },
+  "pre-commit": [
+    "lint",
+    "test"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hubiinetwork/nahmii-cli.git"
@@ -54,6 +59,7 @@
     "mocha": "^5.2.0",
     "nock": "^9.4.4",
     "nyc": "^12.0.2",
+    "pre-commit": "^1.2.2",
     "proxyquire": "^2.0.1",
     "sinon": "^6.1.4",
     "sinon-chai": "^3.2.0"

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+// eslint-disable-next-line no-unused-vars
 const argv = require('yargs')
     .commandDir('./commands', {exclude: /.*.spec.js$/})
     .fail((msg, err) => {

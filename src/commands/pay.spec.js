@@ -32,22 +32,33 @@ const stubbedConfig = {
         address: walletID2,
         secret: 'expected secret'
     },
-    privateKey: sinon.stub()
+    privateKey: sinon.stub(),
+    apiRoot: 'some-api-root',
+    appId: 'an-app-id',
+    appSecret: 'much secret!'
 };
 
-const stubbedProvider = {
+function fakeNahmiiProvider() {
+    throw new Error('NahmiiProvider constructor not implemented!');
+}
+
+fakeNahmiiProvider.from = sinon.stub();
+
+const stubbedProviderInstance = {
     getSupportedTokens: sinon.stub(),
     stopUpdate: sinon.stub()
 };
+stubbedProviderInstance.reset = function() {
+    this.getSupportedTokens.reset();
+    this.stopUpdate.reset();
+}.bind(stubbedProviderInstance);
 
 const stubbedWallet = {};
 
 function proxyquireCommand() {
     return proxyquire('./pay', {
         'nahmii-sdk': {
-            NahmiiProvider: function() {
-                return stubbedProvider;
-            },
+            NahmiiProvider: fakeNahmiiProvider,
             Payment: stubbedPayment,
             Wallet: function() {
                 return stubbedWallet;
@@ -72,11 +83,13 @@ describe('Pay command', () => {
         fakePayment.sign.resolves();
         fakePayment.register.resolves(registeredPayment);
         fakeMoney = {};
+        fakeNahmiiProvider.from
+            .withArgs(stubbedConfig.apiRoot, stubbedConfig.appId, stubbedConfig.appSecret)
+            .resolves(stubbedProviderInstance);
     });
 
     afterEach(() => {
-        stubbedProvider.getSupportedTokens.reset();
-        stubbedProvider.stopUpdate.reset();
+        stubbedProviderInstance.reset();
         stubbedPayment.reset();
         stubbedConfig.privateKey.reset();
         console.log.restore();
@@ -87,7 +100,7 @@ describe('Pay command', () => {
 
         beforeEach(async () => {
             let cmd = proxyquireCommand().handler;
-            stubbedProvider.getSupportedTokens.resolves([testCurrency.hbt, testCurrency.wtf]);
+            stubbedProviderInstance.getSupportedTokens.resolves([testCurrency.hbt, testCurrency.wtf]);
             stubbedMonetaryAmount
                 .withArgs(
                     (1000 * 10 ** testCurrency.hbt.decimals).toString(),
@@ -125,7 +138,7 @@ describe('Pay command', () => {
         });
 
         it('stops token refresh', () => {
-            expect(stubbedProvider.stopUpdate).to.have.been.called;
+            expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
         });
     });
 
@@ -168,7 +181,7 @@ describe('Pay command', () => {
         });
 
         it('stops token refresh', () => {
-            expect(stubbedProvider.stopUpdate).to.have.been.called;
+            expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
         });
     });
 });
