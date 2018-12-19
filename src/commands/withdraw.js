@@ -16,7 +16,7 @@ module.exports = {
         const config = require('../config');
         const {amount, currency, gas, price} = argv;
 
-        const provider = await new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
+        const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
         const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
 
         let spinner = ora();

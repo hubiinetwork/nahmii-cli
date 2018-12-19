@@ -19,19 +19,29 @@ const stubbedConfig = {
     wallet: {
         secret: 'secret much'
     },
-    privateKey: sinon.stub()
+    privateKey: sinon.stub(),
+    apiRoot: 'some-api-root',
+    appId: 'an-app-id',
+    appSecret: 'much secret!'
 };
 
-const stubbedProviderConstructor = {
-    from: sinon.stub()
-};
+function fakeNahmiiProvider() {
+    throw new Error('NahmiiProvider constructor not implemented!');
+}
+fakeNahmiiProvider.from = sinon.stub();
 
-const stubbedProvider = {
+const stubbedProviderInstance = {
     getBlockNumber: sinon.stub(),
     getApiAccessToken: sinon.stub(),
     stopUpdate: sinon.stub(),
     getTransactionConfirmation: sinon.stub()
 };
+stubbedProviderInstance.reset = function() {
+    this.getBlockNumber.reset();
+    this.getApiAccessToken.reset();
+    this.stopUpdate.reset();
+    this.getTransactionConfirmation.reset();
+}.bind(stubbedProviderInstance);
 
 const stubbedOra = {
     start: sinon.stub(),
@@ -43,7 +53,7 @@ stubbedOra.start.returns(stubbedOra);
 function proxyquireCommand() {
     return proxyquire('./deposit', {
         'nahmii-sdk': {
-            NahmiiProvider: stubbedProviderConstructor,
+            NahmiiProvider: fakeNahmiiProvider,
             Wallet: function() {
                 return stubbedWallet;
             }
@@ -72,17 +82,17 @@ describe('Deposit command', () => {
         stubbedConfig.privateKey
             .withArgs(stubbedConfig.wallet.secret)
             .returns('privatekey');
-        stubbedProviderConstructor.from
+        fakeNahmiiProvider.from
             .withArgs(stubbedConfig.apiRoot, stubbedConfig.appId, stubbedConfig.appSecret)
-            .returns(stubbedProvider);
-        stubbedProvider.getTransactionConfirmation
+            .resolves(stubbedProviderInstance);
+        stubbedProviderInstance.getTransactionConfirmation
             .withArgs(txReceipt1.transactionHash)
             .returns(txReceipt1);
-        stubbedProvider.getTransactionConfirmation
+        stubbedProviderInstance.getTransactionConfirmation
             .withArgs(txReceipt2.transactionHash)
             .returns(txReceipt2);
-        stubbedProvider.getBlockNumber.resolves(1);
-        stubbedProvider.getApiAccessToken.resolves('nahmii JWT');
+        stubbedProviderInstance.getBlockNumber.resolves(1);
+        stubbedProviderInstance.getApiAccessToken.resolves('nahmii JWT');
         sinon.stub(console, 'log');
         depositCmd = proxyquireCommand();
         stubbedWallet.depositEth.resolves({hash: txReceipt1.transactionHash});
@@ -95,11 +105,8 @@ describe('Deposit command', () => {
         stubbedWallet.approveTokenDeposit.reset();
         stubbedWallet.completeTokenDeposit.reset();
         stubbedConfig.privateKey.reset();
-        stubbedProviderConstructor.from.reset();
-        stubbedProvider.getBlockNumber.reset();
-        stubbedProvider.getApiAccessToken.reset();
-        stubbedProvider.stopUpdate.reset();
-        stubbedProvider.getTransactionConfirmation.reset();
+        fakeNahmiiProvider.from.reset();
+        stubbedProviderInstance.reset();
         console.log.restore();
     });
 
@@ -129,7 +136,7 @@ describe('Deposit command', () => {
         });
 
         it('stops token refresh', () => {
-            expect(stubbedProvider.stopUpdate).to.have.been.called;
+            expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
         });
     });
 
@@ -168,7 +175,7 @@ describe('Deposit command', () => {
         });
 
         it('stops token refresh', () => {
-            expect(stubbedProvider.stopUpdate).to.have.been.called;
+            expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
         });
     });
 
@@ -194,7 +201,7 @@ describe('Deposit command', () => {
                     gas: 2
                 })
                 .catch(() => {
-                    expect(stubbedProviderConstructor.from).to.not.have.been.called;
+                    expect(fakeNahmiiProvider.from).to.not.have.been.called;
                     done();
                 });
         });
@@ -222,7 +229,7 @@ describe('Deposit command', () => {
                     gas: 2
                 })
                 .catch(() => {
-                    expect(stubbedProviderConstructor.from).to.not.have.been.called;
+                    expect(fakeNahmiiProvider.from).to.not.have.been.called;
                     done();
                 });
         });
@@ -230,7 +237,7 @@ describe('Deposit command', () => {
     });
 
     [
-        stubbedProvider.getTransactionConfirmation,
+        stubbedProviderInstance.getTransactionConfirmation,
         stubbedWallet.depositEth
     ].forEach((depositFunc)=> {
         context('wallet fails to deposit ETH', () => {
@@ -256,13 +263,13 @@ describe('Deposit command', () => {
             });
 
             it('stops token refresh', () => {
-                expect(stubbedProvider.stopUpdate).to.have.been.called;
+                expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
             });
         });
     });
 
     [
-        stubbedProvider.getTransactionConfirmation,
+        stubbedProviderInstance.getTransactionConfirmation,
         stubbedWallet.approveTokenDeposit,
         stubbedWallet.completeTokenDeposit
     ].forEach((tokenDepositFunc)=> {
@@ -289,7 +296,7 @@ describe('Deposit command', () => {
             });
 
             it('stops token refresh', () => {
-                expect(stubbedProvider.stopUpdate).to.have.been.called;
+                expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
             });
         });
     });
