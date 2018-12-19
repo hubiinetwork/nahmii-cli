@@ -7,22 +7,23 @@ const ora = require('ora');
 const moment = require('moment');
 
 module.exports = {
-    command: 'stage <currency>  [--gas=<gaslimit>]',
+    command: 'stage <currency>  [--gas=<gaslimit> --price=<gasPrice in gwei>]',
     describe: 'Stage all qualified settlement challenges for <currency>',
     builder: yargs => {
         yargs.example('stage ETH', 'Stage all settlement challenges for <currency>');
         yargs.example('stage HBT', 'Stage all settlement challenges for <currency>');
     },
     handler: async (argv) => {
-        const { currency, gas } = argv;
+        const { currency, gas, price } = argv;
 
         const config = require('../config');
-        const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
+        const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
 
         let spinner = ora();
         try {
             const tokenInfo = await provider.getTokenInfo(currency);
             const gasLimit = parseInt(gas) || null;
+            const gasPrice = price ? ethers.utils.bigNumberify(price).mul(9) : null;
 
             let wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
             const settlement = new nahmii.Settlement(provider);
@@ -67,7 +68,7 @@ module.exports = {
                 const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
                 spinner.info(`Starting ${type} settlement challenge with stage amount ${formattedStageAmount} ${currency}.`);
 
-                const currentTx = await settlement.settleBySettleableChallenge(settleableChallenge, wallet, {gasLimit});
+                const currentTx = await settlement.settleBySettleableChallenge(settleableChallenge, wallet, {gasLimit, gasPrice});
                 spinner.start(`Waiting for transaction ${currentTx.hash} to be mined`).start();
 
                 const txReceipt = await provider.getTransactionConfirmation(currentTx.hash, 300);

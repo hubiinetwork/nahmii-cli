@@ -7,21 +7,22 @@ const moment = require('moment');
 const ora = require('ora');
 
 module.exports = {
-    command: 'settle <stageAmount> <currency> [--gas=<gaslimit>]',
+    command: 'settle <stageAmount> <currency> [--gas=<gasLimit> --price=<gasPrice in gwei>]',
     describe: 'Start settlement challenges for <stageAmount> <currency> intended stage amount',
     builder: yargs => {
         yargs.example('settle 1 ETH', 'Start settlement challenges for 1 Ether intended stage amount');
         yargs.example('settle 1000 HBT', 'Start settlement challenges for 1000 Hubiits (HBT) intended stage amount');
     },
     handler: async (argv) => {
-        const { stageAmount, currency, gas } = argv;
+        const { stageAmount, currency, gas, price } = argv;
         const config = require('../config');
-        const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
-        
+        const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
+
         let spinner = ora();
         try {
             const tokenInfo = await provider.getTokenInfo(currency);
             const gasLimit = parseInt(gas) || null;
+            const gasPrice = price ? ethers.utils.bigNumberify(price).mul(9) : null;
 
             const stageAmountBN = ethers.utils.parseUnits(stageAmount, tokenInfo.decimals);
             const stageMonetaryAmount = new nahmii.MonetaryAmount(stageAmountBN, tokenInfo.currency, 0);
@@ -57,7 +58,7 @@ module.exports = {
                     const {amount} = stageMonetaryAmount.toJSON();
                     const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
                     spinner.info(`Starting ${type} settlement challenge with stage amount ${formattedStageAmount} ${currency}.`);
-                    const currentTx = await settlement.startByRequiredChallenge(requiredChallenge, wallet, {gasLimit});
+                    const currentTx = await settlement.startByRequiredChallenge(requiredChallenge, wallet, {gasLimit, gasPrice});
                     spinner.start(`Waiting for transaction ${currentTx.hash} to be mined`).start();
                     const txReceipt = await provider.getTransactionConfirmation(currentTx.hash, 300);
                     spinner.succeed(`Successfully started settlement challenge: ${currentTx.hash} [gas used: ${ethers.utils.bigNumberify(txReceipt.gasUsed).toString()}]`);
