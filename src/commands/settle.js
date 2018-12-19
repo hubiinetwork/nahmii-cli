@@ -63,7 +63,8 @@ module.exports = {
                     const txReceipt = await provider.getTransactionConfirmation(currentTx.hash, 300);
                     spinner.succeed(`Successfully started settlement challenge: ${currentTx.hash} [gas used: ${ethers.utils.bigNumberify(txReceipt.gasUsed).toString()}]`);
                 }
-            } else {
+            }
+            else {
                 spinner.warn('Can not start new challenges. Please check if the ongoing challenges have expired.');
             }
 
