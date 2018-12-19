@@ -65,22 +65,33 @@ const stubbedConfig = {
         address: wallet1,
         secret: 'expected secret'
     },
-    privateKey: sinon.stub()
+    privateKey: sinon.stub(),
+    apiRoot: 'some-api-root',
+    appId: 'an-app-id',
+    appSecret: 'much secret!'
 };
 
-const stubbedProvider = {
+function fakeNahmiiProvider() {
+    throw new Error('NahmiiProvider constructor not implemented!');
+}
+
+fakeNahmiiProvider.from = sinon.stub();
+
+const stubbedProviderInstance = {
     getPendingPayments: sinon.stub(),
     stopUpdate: sinon.stub()
 };
+stubbedProviderInstance.reset = function() {
+    this.getPendingPayments.reset();
+    this.stopUpdate.reset();
+}.bind(stubbedProviderInstance);
 
 const utils = require('nahmii-sdk').utils;
 
 function proxyquireCommand() {
     return proxyquire('./payments', {
         'nahmii-sdk': {
-            NahmiiProvider: function() {
-                return stubbedProvider;
-            },
+            NahmiiProvider: fakeNahmiiProvider,
             utils: utils
         },
         '../../config': stubbedConfig
@@ -91,21 +102,24 @@ describe('Show Payments command', () => {
     let showPayments;
 
     beforeEach(() => {
-        stubbedConfig.wallet.address = wallet1;
-        showPayments = proxyquireCommand().handler;
         sinon.stub(console, 'log');
+        stubbedConfig.wallet.address = wallet1;
+        fakeNahmiiProvider.from
+            .withArgs(stubbedConfig.apiRoot, stubbedConfig.appId, stubbedConfig.appSecret)
+            .resolves(stubbedProviderInstance);
+        showPayments = proxyquireCommand().handler;
     });
 
     afterEach(() => {
         console.log.restore();
-        stubbedProvider.getPendingPayments.reset();
+        stubbedProviderInstance.reset();
     });
 
     [utils.prefix0x(wallet1), utils.strip0x(wallet1)].forEach(myWallet => {
         context('API responds with payments', () => {
             beforeEach(async () => {
                 stubbedConfig.wallet.address = myWallet;
-                stubbedProvider.getPendingPayments.resolves(testPayments);
+                stubbedProviderInstance.getPendingPayments.resolves(testPayments);
                 await showPayments();
             });
 
@@ -120,14 +134,14 @@ describe('Show Payments command', () => {
             });
 
             it('stops token refresh', () => {
-                expect(stubbedProvider.stopUpdate).to.have.been.called;
+                expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
             });
         });
     });
 
     context('API responds with something other than an array', () => {
         beforeEach(async () => {
-            stubbedProvider.getPendingPayments.resolves({});
+            stubbedProviderInstance.getPendingPayments.resolves({});
             await showPayments();
         });
 
@@ -137,7 +151,7 @@ describe('Show Payments command', () => {
         });
 
         it('stops token refresh', () => {
-            expect(stubbedProvider.stopUpdate).to.have.been.called;
+            expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
         });
     });
 
@@ -145,7 +159,7 @@ describe('Show Payments command', () => {
         let error;
 
         beforeEach((done) => {
-            stubbedProvider.getPendingPayments.rejects();
+            stubbedProviderInstance.getPendingPayments.rejects();
             showPayments()
                 .catch(err => {
                     error = err;
@@ -158,7 +172,7 @@ describe('Show Payments command', () => {
         });
 
         it('stops token refresh', () => {
-            expect(stubbedProvider.stopUpdate).to.have.been.called;
+            expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
         });
     });
 });

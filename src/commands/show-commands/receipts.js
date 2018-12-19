@@ -10,7 +10,7 @@ module.exports = {
     builder: {},
     handler: async () => {
         const config = require('../../config');
-        const provider = new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
+        const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
 
         const isMyReceipt = (receipt) => {
             return strip0x(receipt.sender.wallet.toUpperCase()) === strip0x(config.wallet.address.toUpperCase())

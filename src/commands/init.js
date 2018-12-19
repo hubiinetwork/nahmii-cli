@@ -7,16 +7,16 @@ const os = require('os');
 const readlineSync = require('readline-sync');
 
 module.exports = {
-    command : 'init [--force]',
+    command: 'init [--force]',
     describe: 'Initializes the config file',
-    builder : yargs => {
+    builder: yargs => {
         yargs.option('force', {
             desc: 'replace existing config',
             default: false,
             type: 'boolean'
         });
     },
-    handler : async (argv) => {
+    handler: async (argv) => {
         const configDir = path.resolve(os.homedir(), '.nahmii');
         const configFile = path.resolve(configDir, 'config.yaml');
         const keystoreDir = path.resolve(configDir, 'keystore');

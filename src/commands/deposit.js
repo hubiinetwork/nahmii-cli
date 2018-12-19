@@ -24,14 +24,14 @@ module.exports = {
         const gasLimit = validateGasLimitIsPositiveInteger(argv.gas);
 
         const config = require('../config');
-        const provider = await new nahmii.NahmiiProvider(config.apiRoot, config.appId, config.appSecret);
+        const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
         const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
 
         let spinner = ora();
         try {
             if (argv.currency.toUpperCase() === 'ETH') {
                 spinner.start('Waiting for transaction to be broadcast');
-                const { hash } = await wallet.depositEth(amount, {gasLimit});
+                const {hash} = await wallet.depositEth(amount, {gasLimit});
                 spinner.succeed(`Transaction broadcast ${hash}`);
                 spinner.start('Waiting for transaction to be mined').start();
                 const receipt = await provider.getTransactionConfirmation(hash);
