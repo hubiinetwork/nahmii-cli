@@ -23,7 +23,7 @@ module.exports = {
         try {
             const tokenInfo = await provider.getTokenInfo(currency);
             const gasLimit = parseInt(gas) || null;
-            const gasPrice = price ? ethers.utils.bigNumberify(price).mul(9) : null;
+            const gasPrice = price ? ethers.utils.bigNumberify(price).mul(ethers.utils.bigNumberify(10).pow(9)) : null;
 
             let wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
             const settlement = new nahmii.Settlement(provider);

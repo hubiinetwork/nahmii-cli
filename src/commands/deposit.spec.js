@@ -22,7 +22,9 @@ const stubbedConfig = {
     privateKey: sinon.stub()
 };
 
-const stubbedProviderConstructor = sinon.stub();
+const stubbedProviderConstructor = {
+    from: sinon.stub()
+};
 
 const stubbedProvider = {
     getBlockNumber: sinon.stub(),
@@ -70,7 +72,7 @@ describe('Deposit command', () => {
         stubbedConfig.privateKey
             .withArgs(stubbedConfig.wallet.secret)
             .returns('privatekey');
-        stubbedProviderConstructor
+        stubbedProviderConstructor.from
             .withArgs(stubbedConfig.apiRoot, stubbedConfig.appId, stubbedConfig.appSecret)
             .returns(stubbedProvider);
         stubbedProvider.getTransactionConfirmation
@@ -93,7 +95,7 @@ describe('Deposit command', () => {
         stubbedWallet.approveTokenDeposit.reset();
         stubbedWallet.completeTokenDeposit.reset();
         stubbedConfig.privateKey.reset();
-        stubbedProviderConstructor.reset();
+        stubbedProviderConstructor.from.reset();
         stubbedProvider.getBlockNumber.reset();
         stubbedProvider.getApiAccessToken.reset();
         stubbedProvider.stopUpdate.reset();
@@ -106,12 +108,13 @@ describe('Deposit command', () => {
             return depositCmd.handler.call(undefined, {
                 amount: '1.1',
                 currency: 'ETH',
-                gas: 2
+                gas: 2,
+                price: 2
             });
         });
 
         it('tells wallet to deposit 1.1 ETH', () => {
-            expect(stubbedWallet.depositEth).to.have.been.calledWith('1.1', {gasLimit: 2});
+            expect(stubbedWallet.depositEth).to.have.been.calledWith('1.1', {gasLimit: 2, gasPrice: ethers.utils.bigNumberify(2000000000)});
         });
 
         it('outputs an single receipt to stdout', () => {
@@ -140,11 +143,11 @@ describe('Deposit command', () => {
         });
 
         it('tells wallet to approve 0.07 TT1 transfer', () => {
-            expect(stubbedWallet.approveTokenDeposit).to.have.been.calledWith('0.07', 'TT1', {gasLimit: 2});
+            expect(stubbedWallet.approveTokenDeposit).to.have.been.calledWith('0.07', 'TT1', {gasLimit: 2, gasPrice: null});
         });
 
         it('tells wallet to complete 0.07 TT1 transfer', () => {
-            expect(stubbedWallet.completeTokenDeposit).to.have.been.calledWith('0.07', 'TT1', {gasLimit: 2});
+            expect(stubbedWallet.completeTokenDeposit).to.have.been.calledWith('0.07', 'TT1', {gasLimit: 2, gasPrice: null});
         });
 
         it('outputs correct tx receipts to stdout', () => {
@@ -191,7 +194,7 @@ describe('Deposit command', () => {
                     gas: 2
                 })
                 .catch(() => {
-                    expect(stubbedProviderConstructor).to.not.have.been.called;
+                    expect(stubbedProviderConstructor.from).to.not.have.been.called;
                     done();
                 });
         });
@@ -219,7 +222,7 @@ describe('Deposit command', () => {
                     gas: 2
                 })
                 .catch(() => {
-                    expect(stubbedProviderConstructor).to.not.have.been.called;
+                    expect(stubbedProviderConstructor.from).to.not.have.been.called;
                     done();
                 });
         });

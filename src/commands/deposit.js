@@ -22,7 +22,8 @@ module.exports = {
     handler: async (argv) => {
         const amount = validateAmountIsPositiveDecimalNumber(argv.amount);
         const gasLimit = validateGasLimitIsPositiveInteger(argv.gas);
-        const gasPrice = argv.price ? ethers.utils.bigNumberify(validateGasLimitIsPositiveInteger(argv.price)).mul(9) : null;
+        const gasPriceInGwei = validateGasLimitIsPositiveInteger(argv.price);
+        const gasPrice = argv.price ? ethers.utils.bigNumberify(gasPriceInGwei).mul(ethers.utils.bigNumberify(10).pow(9)) : null;
 
         const config = require('../config');
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
@@ -32,7 +33,7 @@ module.exports = {
         try {
             if (argv.currency.toUpperCase() === 'ETH') {
                 spinner.start('Waiting for transaction to be broadcast');
-                const { hash } = await wallet.depositEth(amount, {gasLimit});
+                const { hash } = await wallet.depositEth(amount, {gasLimit, gasPrice});
                 spinner.succeed(`Transaction broadcast ${hash}`);
                 spinner.start('Waiting for transaction to be mined').start();
                 const receipt = await provider.getTransactionConfirmation(hash);

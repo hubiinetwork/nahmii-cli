@@ -22,7 +22,7 @@ module.exports = {
         try {
             const tokenInfo = await provider.getTokenInfo(currency);
             const gasLimit = parseInt(gas) || null;
-            const gasPrice = price ? ethers.utils.bigNumberify(price).mul(9) : null;
+            const gasPrice = price ? ethers.utils.bigNumberify(price).mul(ethers.utils.bigNumberify(10).pow(9)) : null;
 
             const stageAmountBN = ethers.utils.parseUnits(stageAmount, tokenInfo.decimals);
             const stageMonetaryAmount = new nahmii.MonetaryAmount(stageAmountBN, tokenInfo.currency, 0);
