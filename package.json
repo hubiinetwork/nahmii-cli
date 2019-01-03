@@ -1,6 +1,6 @@
 {
   "name": "nahmii-cli",
-  "version": "1.0.0-beta.17",
+  "version": "1.0.0-beta.18",
   "description": "CLI interface for using the nahmii by hubii protocol",
   "main": "index.js",
   "scripts": {
