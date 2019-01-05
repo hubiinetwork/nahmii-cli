@@ -66,7 +66,7 @@ module.exports = {
                 const {type, intendedStageAmount} = settleableChallenge;
                 const {amount} = intendedStageAmount.toJSON();
                 const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
-                spinner.info(`Starting ${type} settlement challenge with stage amount ${formattedStageAmount} ${currency}.`);
+                spinner.info(`Staging ${type} settlement with stage amount ${formattedStageAmount} ${currency}.`);
 
                 const currentTx = await settlement.settleBySettleableChallenge(settleableChallenge, wallet, {gasLimit, gasPrice});
                 spinner.start(`Waiting for transaction ${currentTx.hash} to be mined`).start();
