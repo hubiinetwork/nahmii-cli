@@ -89,6 +89,7 @@ let validateGasLimitIsPositiveInteger = function(gas) {
 };
 
 function reduceReceipt(txReceipt) {
+    // TODO: Fix links when on mainnet
     return {
         transactionHash: txReceipt.transactionHash,
         blockNumber: txReceipt.blockNumber,
