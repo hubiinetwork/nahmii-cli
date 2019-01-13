@@ -19,8 +19,8 @@ module.exports = {
         });
     },
     handler: async (argv) => {
-        const period = validatePeriodIsPositiveInteger(argv.period);
-        const gasLimit = validateGasLimitIsPositiveInteger(argv.gas);
+        const period = validatePeriod(argv.period);
+        const gasLimit = validateGasLimit(argv.gas);
         const options = {gasLimit};
 
         const config = require('../config');
@@ -84,19 +84,19 @@ module.exports = {
     }
 };
 
-let validateGasLimitIsPositiveInteger = function(gas) {
+function validateGasLimit(gas) {
     const gasLimit = parseInt(gas);
     if (gasLimit <= 0)
         throw new Error('Gas limit must be a number higher than 0');
     return gasLimit;
-};
+}
 
-let validatePeriodIsPositiveInteger = function(period) {
+function validatePeriod(period) {
     period = parseInt(period);
     if (period < 1 || period > 120)
         throw new Error('Period must be a number from 1 to 120.');
     return period;
-};
+}
 
 function reduceReceipt(txReceipt) {
     // TODO: Fix links when on mainnet
