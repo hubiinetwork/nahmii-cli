@@ -20,8 +20,8 @@ module.exports = {
         yargs.coerce('amount', arg => arg); // Coerce it to remain a string
     },
     handler: async (argv) => {
-        const amount = validateAmountIsPositiveDecimalNumber(argv.amount);
-        const gasLimit = validateGasLimitIsPositiveInteger(argv.gas);
+        const amount = validateAmount(argv.amount);
+        const gasLimit = validateGasLimit(argv.gas);
 
         const config = require('../config');
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
@@ -65,7 +65,7 @@ module.exports = {
     }
 };
 
-function validateAmountIsPositiveDecimalNumber(amount) {
+function validateAmount(amount) {
     let amountBN;
     try {
         amountBN = ethers.utils.parseEther(amount);
@@ -81,14 +81,15 @@ function validateAmountIsPositiveDecimalNumber(amount) {
     return amount;
 }
 
-let validateGasLimitIsPositiveInteger = function(gas) {
+function validateGasLimit(gas) {
     const gasLimit = parseInt(gas);
     if (gasLimit <= 0)
         throw new Error('Gas limit must be a number higher than 0');
     return gasLimit;
-};
+}
 
 function reduceReceipt(txReceipt) {
+    // TODO: Fix links when on mainnet
     return {
         transactionHash: txReceipt.transactionHash,
         blockNumber: txReceipt.blockNumber,
