@@ -11,11 +11,13 @@ const ethers = require('ethers');
 
 const stubbedWallet = {
     approveTokenDeposit: sinon.stub(),
-    completeTokenDeposit: sinon.stub()
+    completeTokenDeposit: sinon.stub(),
+    getDepositAllowance: sinon.stub()
 };
 stubbedWallet.reset = function() {
     this.approveTokenDeposit.reset();
     this.completeTokenDeposit.reset();
+    this.getDepositAllowance.reset();
 }.bind(stubbedWallet);
 
 const stubbedConfig = {
@@ -60,6 +62,10 @@ stubbedRevenueTokenManager.reset = function() {
     this.release.reset();
 }.bind(stubbedRevenueTokenManager);
 
+const erc20contractClass = {
+    from: sinon.stub()
+};
+
 const stubbedNiiContract = {
     balanceOf: sinon.stub()
 };
@@ -73,7 +79,8 @@ function proxyquireCommand() {
             NahmiiProvider: fakeNahmiiProvider,
             Wallet: function() {
                 return stubbedWallet;
-            }
+            },
+            Erc20Contract: erc20contractClass
         },
         '../config': stubbedConfig,
         'ora': function() {
@@ -81,9 +88,6 @@ function proxyquireCommand() {
         },
         '../contracts/revenue-token-manager-contract': function() {
             return stubbedRevenueTokenManager;
-        },
-        'nahmii-sdk/lib/wallet/erc20-contract': function() {
-            return stubbedNiiContract;
         }
     });
 }
@@ -116,6 +120,7 @@ describe('Claim NII command', () => {
             .withArgs(stubbedConfig.apiRoot, stubbedConfig.appId, stubbedConfig.appSecret)
             .resolves(stubbedProviderInstance);
         stubbedRevenueTokenManager.release.resolves(txs[0]);
+        stubbedWallet.getDepositAllowance.resolves(ethers.utils.bigNumberify(0));
         stubbedWallet.approveTokenDeposit.resolves(txs[1]);
         stubbedWallet.completeTokenDeposit.resolves(txs[2]);
         for (let i = 0; i < txs.length; i++) {
@@ -123,6 +128,7 @@ describe('Claim NII command', () => {
                 .withArgs(txs[i].hash)
                 .returns(txReceipts[i]);
         }
+        erc20contractClass.from.withArgs('NII', stubbedWallet).resolves(stubbedNiiContract);
         stubbedNiiContract.balanceOf
             .withArgs(stubbedConfig.wallet.address)
             .onFirstCall().resolves('0')
