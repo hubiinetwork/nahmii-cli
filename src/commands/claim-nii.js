@@ -123,6 +123,9 @@ function validatePeriod(period) {
 }
 
 function reduceReceipt(txReceipt) {
+    if (!txReceipt)
+        return null;
+
     // TODO: Fix links when on mainnet
     return {
         transactionHash: txReceipt.transactionHash,
