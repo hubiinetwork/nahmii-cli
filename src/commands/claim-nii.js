@@ -6,7 +6,7 @@ const ethers = require('ethers');
 const ora = require('ora');
 
 module.exports = {
-    command: 'claim nii for period <period> [--gas=<gaslimit>]',
+    command: 'claim nii for period <period> [--gas=<gaslimit>] [--timeout=<seconds>]',
     describe: 'Claims NII tokens from the time locked revenue token manager and deposits all NII to nahmii. Will only work if wallet is beneficiary of contract.',
     builder: yargs => {
         yargs.example('claim nii for period 1', 'Claims NII tokens for time locked period 1 (December 2018).');
@@ -15,10 +15,16 @@ module.exports = {
             default: 800000,
             type: 'number'
         });
+        yargs.options('timeout', {
+            desc: 'Number of seconds to wait for each on-chain transaction to be mined.',
+            default: 60,
+            type: 'number'
+        });
     },
     handler: async (argv) => {
         const period = validatePeriod(argv.period);
         const gasLimit = validateGasLimit(argv.gas);
+        const timeout = validateTimeout(argv.timeout);
         const options = {gasLimit};
 
         const config = require('../config');
@@ -39,7 +45,7 @@ module.exports = {
             spinner.succeed(`1/8 - Claim registered for period ${period}`);
 
             spinner.start('2/8 - Confirming claim');
-            const releaseReceipt = await provider.getTransactionConfirmation(releaseTx.hash);
+            const releaseReceipt = await provider.getTransactionConfirmation(releaseTx.hash, timeout);
             spinner.succeed('2/8 - Claim confirmed');
 
             niiBalance = await niiContract.balanceOf(config.wallet.address);
@@ -58,7 +64,7 @@ module.exports = {
                     spinner.succeed('3/8 - Allowance cleared');
 
                     spinner.start('4/8 - Confirming allowance is cleared');
-                    await provider.getTransactionConfirmation(pendingClearTx.hash);
+                    await provider.getTransactionConfirmation(pendingClearTx.hash, timeout);
                     spinner.succeed('4/8 - Allowance confirmed cleared');
                 }
                 else {
@@ -71,7 +77,7 @@ module.exports = {
                 spinner.succeed('3/8 - Transfer approval registered');
 
                 spinner.start('6/8 - Confirming transfer approval');
-                approveReceipt = await provider.getTransactionConfirmation(pendingApprovalTx.hash);
+                approveReceipt = await provider.getTransactionConfirmation(pendingApprovalTx.hash, timeout);
                 spinner.succeed('4/8 - Transfer approval confirmed');
             }
             else {
@@ -86,7 +92,7 @@ module.exports = {
             spinner.succeed('7/8 - nahmii deposit registered');
 
             spinner.start('8/8 - Confirming nahmii deposit');
-            const completeReceipt = await provider.getTransactionConfirmation(pendingCompleteTx.hash);
+            const completeReceipt = await provider.getTransactionConfirmation(pendingCompleteTx.hash, timeout);
             spinner.succeed(`8/8 - nahmii deposit of ${niiBalance} NII confirmed`);
 
             console.error('Please allow a few minutes for the nahmii balance to be updated!');
@@ -111,7 +117,7 @@ module.exports = {
 function validateGasLimit(gas) {
     const gasLimit = parseInt(gas);
     if (gasLimit <= 0)
-        throw new Error('Gas limit must be a number higher than 0');
+        throw new Error('Gas limit must be a number higher than 0.');
     return gasLimit;
 }
 
@@ -120,6 +126,13 @@ function validatePeriod(period) {
     if (period < 1 || period > 120)
         throw new Error('Period must be a number from 1 to 120.');
     return period;
+}
+
+function validateTimeout(timeout) {
+    timeout = parseInt(timeout);
+    if (timeout <= 0)
+        throw new Error('Timeout must be a number higher than 0.');
+    return timeout;
 }
 
 function reduceReceipt(txReceipt) {

@@ -92,7 +92,7 @@ function proxyquireCommand() {
     });
 }
 
-const txs = [{hash: 'tx hash 1'}, {hash: 'tx hash 2'}, {hash: 'tx hash 3'}];
+const txs = [{hash: 'tx hash 1'}, {hash: 'tx hash 2'}, {hash: 'tx hash 3'}, {hash: 'tx hash 4'}];
 
 const txReceipts = [
     {
@@ -106,7 +106,11 @@ const txReceipts = [
     }, {
         transactionHash: 'tx hash 3',
         blockNumber: 4,
-        gasUsed: ethers.utils.bigNumberify(12)
+        gasUsed: ethers.utils.bigNumberify(12345)
+    }, {
+        transactionHash: 'tx hash 4',
+        blockNumber: 5,
+        gasUsed: ethers.utils.bigNumberify(23456)
     }];
 
 describe('Claim NII command', () => {
@@ -121,8 +125,9 @@ describe('Claim NII command', () => {
             .resolves(stubbedProviderInstance);
         stubbedRevenueTokenManager.release.resolves(txs[0]);
         stubbedWallet.getDepositAllowance.resolves(ethers.utils.bigNumberify(0));
-        stubbedWallet.approveTokenDeposit.resolves(txs[1]);
-        stubbedWallet.completeTokenDeposit.resolves(txs[2]);
+        stubbedWallet.approveTokenDeposit.withArgs(0, 'NII').resolves(txs[1]);
+        stubbedWallet.approveTokenDeposit.withArgs('1000000000.0', 'NII').resolves(txs[2]);
+        stubbedWallet.completeTokenDeposit.resolves(txs[3]);
         for (let i = 0; i < txs.length; i++) {
             stubbedProviderInstance.getTransactionConfirmation
                 .withArgs(txs[i].hash)
@@ -143,51 +148,85 @@ describe('Claim NII command', () => {
         stubbedRevenueTokenManager.reset();
         stubbedNiiContract.reset();
         stubbedWallet.reset();
+        stubbedProviderInstance.getTransactionConfirmation.reset();
         console.log.restore();
         console.error.restore();
     });
 
     context('no periods claimed and enough ETH to cover gas cost', () => {
 
-        context('claim nii for period 0', () => {
-            it('rejects with error', done => {
-                cmd.handler
-                    .call(undefined, {
-                        period: '0'
-                    })
-                    .catch(err => {
-                        expect(err.message).to.match(/period must be a number from 1 to 120/i);
-                        done();
-                    });
-            });
-        });
-
-        context('claim nii for period 121', () => {
-            it('rejects with error', done => {
-                cmd.handler
-                    .call(undefined, {
-                        period: '121'
-                    })
-                    .catch(err => {
-                        expect(err.message).to.match(/period must be a number from 1 to 120/i);
-                        done();
-                    });
-            });
-        });
-
-        context('claim nii for period 1', () => {
-            beforeEach(() => {
-                return cmd.handler.call(undefined, {
-                    period: '1'
+        context('with default options', () => {
+            context('claim nii for period 0', () => {
+                it('rejects with error', done => {
+                    cmd.handler
+                        .call(undefined, {
+                            period: '0'
+                        })
+                        .catch(err => {
+                            expect(err.message).to.match(/period must be a number from 1 to 120/i);
+                            done();
+                        });
                 });
             });
 
-            it('releases fund for period 0 in RevenueTokenManager', () => {
-                expect(stubbedRevenueTokenManager.release).to.have.been.calledWith(0);
+            context('claim nii for period 121', () => {
+                it('rejects with error', done => {
+                    cmd.handler
+                        .call(undefined, {
+                            period: '121'
+                        })
+                        .catch(err => {
+                            expect(err.message).to.match(/period must be a number from 1 to 120/i);
+                            done();
+                        });
+                });
             });
 
-            it('deposits all NII tokens in wallet to nahmii', () => {
-                expect(stubbedWallet.completeTokenDeposit).to.have.been.calledWith('1000000000.0', 'NII');
+            context('claim nii for period 1', () => {
+                beforeEach(() => {
+                    return cmd.handler.call(undefined, {
+                        period: '1'
+                    });
+                });
+
+                it('releases fund for period 0 in RevenueTokenManager', () => {
+                    expect(stubbedRevenueTokenManager.release).to.have.been.calledWith(0);
+                });
+
+                it('deposits all NII tokens in wallet to nahmii', () => {
+                    expect(stubbedWallet.completeTokenDeposit).to.have.been.calledWith('1000000000.0', 'NII');
+                });
+            });
+        });
+
+        context('with specified timeout', () => {
+            let expectedTimeout;
+
+            beforeEach(() => {
+                expectedTimeout = 120;
+            });
+
+            context('claim nii for period 1', () => {
+                beforeEach(() => {
+                    return cmd.handler.call(undefined, {
+                        period: '1',
+                        timeout: expectedTimeout.toString()
+                    });
+                });
+
+                it('releases fund for period 0 in RevenueTokenManager', () => {
+                    expect(stubbedRevenueTokenManager.release).to.have.been.calledWith(0);
+                });
+
+                it('deposits all NII tokens in wallet to nahmii', () => {
+                    expect(stubbedWallet.completeTokenDeposit).to.have.been.calledWith('1000000000.0', 'NII');
+                });
+
+                it('uses specified timeout value when waiting for mining confirmation', () => {
+                    const callCount = stubbedProviderInstance.getTransactionConfirmation.callCount;
+                    for (let i = 0; i < callCount; i++)
+                        expect(stubbedProviderInstance.getTransactionConfirmation.getCall(i).args[1]).to.eql(expectedTimeout);
+                });
             });
         });
     });
@@ -215,7 +254,7 @@ describe('Claim NII command', () => {
         context('transfer approval can not be confirmed', () => {
             beforeEach(() => {
                 stubbedProviderInstance.getTransactionConfirmation
-                    .withArgs(txs[1].hash)
+                    .withArgs(txs[2].hash)
                     .rejects(new Error('some error'));
             });
 
