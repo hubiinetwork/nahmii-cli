@@ -29,7 +29,7 @@ module.exports = {
             const withdrawMonetaryAmount = new nahmii.MonetaryAmount(withdrawAmountBN, tokenInfo.currency, 0);
             
             spinner.start('Waiting for transaction to be broadcast').start();
-            const stagedBalanceBN = await wallet.getNahmiiStagedBalance(tokenInfo.currency);
+            const stagedBalanceBN = await wallet.getNahmiiStagedBalance(tokenInfo.symbol);
 
             if (withdrawAmountBN.gt(stagedBalanceBN)) {
                 spinner.fail(`The maximum withdrawal nahmii balance is ${ethers.utils.formatUnits(stagedBalanceBN, tokenInfo.decimals)}`);

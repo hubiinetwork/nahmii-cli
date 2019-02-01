@@ -20,9 +20,9 @@ module.exports = {
         yargs.coerce('amount', arg => arg); // Coerce it to remain a string
     },
     handler: async (argv) => {
-        const amount = validateAmountIsPositiveDecimalNumber(argv.amount);
-        const gasLimit = validateGasLimitIsPositiveInteger(argv.gas);
-        const gasPriceInGwei = validateGasLimitIsPositiveInteger(argv.price);
+        const amount = validateAmount(argv.amount);
+        const gasLimit = validateGasLimit(argv.gas);
+        const gasPriceInGwei = validateGasLimit(argv.price);
         const gasPrice = argv.price ? ethers.utils.bigNumberify(gasPriceInGwei).mul(ethers.utils.bigNumberify(10).pow(9)) : null;
 
         const config = require('../config');
@@ -67,7 +67,7 @@ module.exports = {
     }
 };
 
-function validateAmountIsPositiveDecimalNumber(amount) {
+function validateAmount(amount) {
     let amountBN;
     try {
         amountBN = ethers.utils.parseEther(amount);
@@ -83,14 +83,15 @@ function validateAmountIsPositiveDecimalNumber(amount) {
     return amount;
 }
 
-let validateGasLimitIsPositiveInteger = function(gas) {
+function validateGasLimit(gas) {
     const gasLimit = parseInt(gas);
     if (gasLimit <= 0)
         throw new Error('Gas limit must be a number higher than 0');
     return gasLimit;
-};
+}
 
 function reduceReceipt(txReceipt) {
+    // TODO: Fix links when on mainnet
     return {
         transactionHash: txReceipt.transactionHash,
         blockNumber: txReceipt.blockNumber,
