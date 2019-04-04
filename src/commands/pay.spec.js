@@ -8,11 +8,15 @@ chai.use(sinonChai);
 
 const proxyquire = require('proxyquire').noPreserveCache().noCallThru();
 
+const ethers = require('ethers');
+
 const walletID = '0x1234567890123456789012345678901234567890';
 const walletID2 = '0x1234567890123456789012345678901234567891';
 
 const stubbedPayment = sinon.stub();
-const stubbedMonetaryAmount = sinon.stub();
+const stubbedMonetaryAmount = {
+    from: sinon.stub()
+};
 
 const testCurrency = {
     hbt: {
@@ -100,10 +104,11 @@ describe('Pay command', () => {
 
         beforeEach(async () => {
             let cmd = proxyquireCommand().handler;
-            stubbedProviderInstance.getSupportedTokens.resolves([testCurrency.hbt, testCurrency.wtf]);
-            stubbedMonetaryAmount
+            stubbedProviderInstance.getSupportedTokens
+                .resolves([testCurrency.hbt, testCurrency.wtf]);
+            stubbedMonetaryAmount.from
                 .withArgs(
-                    (1000 * 10 ** testCurrency.hbt.decimals).toString(),
+                    ethers.utils.parseUnits('1000', testCurrency.hbt.decimals),
                     testCurrency.hbt.currency,
                 )
                 .returns(fakeMoney);
@@ -147,8 +152,8 @@ describe('Pay command', () => {
 
         beforeEach(async () => {
             let cmd = proxyquireCommand().handler;
-            stubbedMonetaryAmount
-                .withArgs('1100000000000000000', '0x' + '00'.repeat(20),)
+            stubbedMonetaryAmount.from
+                .withArgs(ethers.utils.parseEther('1.1'), '0x' + '00'.repeat(20))
                 .returns(fakeMoney);
 
             stubbedPayment
