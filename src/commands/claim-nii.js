@@ -74,11 +74,11 @@ module.exports = {
 
                 spinner.start(`5/8 - Approving transfer of ${niiBalance} NII`);
                 const pendingApprovalTx = await wallet.approveTokenDeposit(ethers.utils.formatUnits(niiBalance, 15), 'NII', options);
-                spinner.succeed('3/8 - Transfer approval registered');
+                spinner.succeed('5/8 - Transfer approval registered');
 
                 spinner.start('6/8 - Confirming transfer approval');
                 approveReceipt = await provider.getTransactionConfirmation(pendingApprovalTx.hash, timeout);
-                spinner.succeed('4/8 - Transfer approval confirmed');
+                spinner.succeed('6/8 - Transfer approval confirmed');
             }
             else {
                 spinner.succeed('3/8 - Skipped');
