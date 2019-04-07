@@ -18,4 +18,7 @@ const argv = require('yargs')
     })
     .demandCommand()
     .help()
+    .parserConfiguration({
+        'parse-numbers': false
+    })
     .argv;
