@@ -33,24 +33,30 @@ module.exports = {
                 spinner.start('Waiting for transaction to be broadcast');
                 const {hash} = await wallet.depositEth(amount, {gasLimit});
                 spinner.succeed(`Transaction broadcast ${hash}`);
-                spinner.start('Waiting for transaction to be mined').start();
+
+                spinner.start('Waiting for transaction to be mined');
                 const receipt = await provider.getTransactionConfirmation(hash);
                 spinner.succeed('Transaction mined');
+
                 console.log(JSON.stringify([reduceReceipt(receipt)]));
             }
             else {
-                spinner = ora('Waiting for transaction 1/2 to be broadcast').start();
+                spinner.start('Waiting for transaction 1/2 to be broadcast');
                 const pendingApprovalTx = await wallet.approveTokenDeposit(argv.amount, argv.currency, {gasLimit});
                 spinner.succeed(`Transaction 1/2 broadcast ${pendingApprovalTx.hash}`);
-                spinner.start('Waiting for transaction 1/2 to be mined').start();
-                const approveReceipt = await provider.getTransactionConfirmation(pendingApprovalTx.hash);
+
+                spinner.start('Waiting for transaction 1/2 to be mined');
+                const approveReceipt = await provider.getTransactionConfirmation(pendingApprovalTx.hash, 180);
                 spinner.succeed('Transaction 1/2 mined');
-                spinner.start('Waiting for transaction 2/2 to be broadcast').start();
+
+                spinner.start('Waiting for transaction 2/2 to be broadcast');
                 const pendingCompleteTx = await wallet.completeTokenDeposit(argv.amount, argv.currency, {gasLimit});
                 spinner.succeed(`Transaction 2/2 broadcast ${pendingCompleteTx.hash}`);
-                spinner.start('Waiting for transaction 2/2 to be mined').start();
-                const completeReceipt = await provider.getTransactionConfirmation(pendingCompleteTx.hash);
+
+                spinner.start('Waiting for transaction 2/2 to be mined');
+                const completeReceipt = await provider.getTransactionConfirmation(pendingCompleteTx.hash, 180);
                 spinner.succeed('Transaction 2/2 mined');
+
                 console.log(JSON.stringify([reduceReceipt(approveReceipt), reduceReceipt(completeReceipt)]));
             }
         }
