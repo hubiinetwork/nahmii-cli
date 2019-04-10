@@ -6,7 +6,7 @@ const ethers = require('ethers');
 const ora = require('ora');
 
 module.exports = {
-    command: 'deposit <amount> <currency> [--gas=<gaslimit>]',
+    command: 'deposit <amount> <currency> [--gas=<gaslimit>] [--timeout=<seconds>]',
     describe: 'Deposits <amount> of ETH (or any supported token) into your nahmii account.',
     builder: yargs => {
         yargs.example('deposit 1 ETH', 'Deposits 1 Ether using default gas limit.');
@@ -17,11 +17,18 @@ module.exports = {
             default: 600000,
             type: 'number'
         });
+        yargs.options('timeout', {
+            desc: 'Number of seconds to wait for each on-chain transaction to be mined.',
+            default: 60,
+            type: 'number'
+        });
         yargs.coerce('amount', arg => arg); // Coerce it to remain a string
     },
     handler: async (argv) => {
         const amount = validateAmount(argv.amount);
         const gasLimit = validateGasLimit(argv.gas);
+        const timeout = validateTimeout(argv.timeout);
+        const currencySymbol = argv.currency;
 
         const config = require('../config');
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
@@ -29,35 +36,69 @@ module.exports = {
 
         let spinner = ora();
         try {
-            if (argv.currency.toUpperCase() === 'ETH') {
+            if (currencySymbol.toUpperCase() === 'ETH') {
                 spinner.start('Waiting for transaction to be broadcast');
                 const {hash} = await wallet.depositEth(amount, {gasLimit});
                 spinner.succeed(`Transaction broadcast ${hash}`);
 
                 spinner.start('Waiting for transaction to be mined');
-                const receipt = await provider.getTransactionConfirmation(hash);
+                const receipt = await provider.getTransactionConfirmation(hash, timeout);
                 spinner.succeed('Transaction mined');
 
                 console.log(JSON.stringify([reduceReceipt(receipt)]));
             }
             else {
-                spinner.start('Waiting for transaction 1/2 to be broadcast');
-                const pendingApprovalTx = await wallet.approveTokenDeposit(argv.amount, argv.currency, {gasLimit});
-                spinner.succeed(`Transaction 1/2 broadcast ${pendingApprovalTx.hash}`);
+                const tokenContract = await nahmii.Erc20Contract.from(currencySymbol, wallet);
+                const decimals = await determineDecimals(tokenContract);
+                const tokenBalanceBN = await tokenContract.balanceOf(config.wallet.address);
+                const amountBN = ethers.utils.parseUnits(amount, decimals);
 
-                spinner.start('Waiting for transaction 1/2 to be mined');
-                const approveReceipt = await provider.getTransactionConfirmation(pendingApprovalTx.hash, 180);
-                spinner.succeed('Transaction 1/2 mined');
+                dbg(`Network balance: ${ethers.utils.formatUnits(tokenBalanceBN, decimals)} ${currencySymbol}`);
+                dbg(`Depositing: ${amount} ${currencySymbol}`);
 
-                spinner.start('Waiting for transaction 2/2 to be broadcast');
-                const pendingCompleteTx = await wallet.completeTokenDeposit(argv.amount, argv.currency, {gasLimit});
-                spinner.succeed(`Transaction 2/2 broadcast ${pendingCompleteTx.hash}`);
+                if (amountBN.lte(tokenBalanceBN)) {
+                    spinner.start('Checking allowance');
+                    const allowanceBN = await wallet.getDepositAllowance(currencySymbol);
+                    spinner.succeed(`Current allowance: ${ethers.utils.formatUnits(allowanceBN, decimals)} ${currencySymbol}`);
 
-                spinner.start('Waiting for transaction 2/2 to be mined');
-                const completeReceipt = await provider.getTransactionConfirmation(pendingCompleteTx.hash, 180);
-                spinner.succeed('Transaction 2/2 mined');
+                    let approveReceipt = null;
 
-                console.log(JSON.stringify([reduceReceipt(approveReceipt), reduceReceipt(completeReceipt)]));
+                    if (allowanceBN.lt(amountBN)) {
+                        if (allowanceBN.gt(ethers.utils.bigNumberify(0))) {
+                            spinner.start('Clearing allowance');
+                            const pendingClearTx = await wallet.approveTokenDeposit(0, currencySymbol, {gasLimit});
+                            spinner.succeed(`Allowance cleared - ${pendingClearTx.hash}`);
+
+                            spinner.start('Confirming allowance is cleared');
+                            await provider.getTransactionConfirmation(pendingClearTx.hash, timeout);
+                            spinner.succeed('Allowance confirmed cleared');
+                        }
+
+                        spinner.start(`Approving transfer of ${amount} ${currencySymbol}`);
+                        const pendingApprovalTx = await wallet.approveTokenDeposit(amount, currencySymbol, {gasLimit});
+                        spinner.succeed(`Transfer approval registered - ${pendingApprovalTx.hash}`);
+
+                        spinner.start('Confirming transfer approval');
+                        approveReceipt = await provider.getTransactionConfirmation(pendingApprovalTx.hash, timeout);
+                        spinner.succeed('Transfer approval confirmed');
+                    }
+
+                    spinner.start('Registering nahmii deposit');
+                    const pendingDepositTx = await wallet.completeTokenDeposit(amount, currencySymbol, {gasLimit});
+                    spinner.succeed(`nahmii deposit registered - ${pendingDepositTx.hash}`);
+
+                    spinner.start('Confirming nahmii deposit');
+                    const completeReceipt = await provider.getTransactionConfirmation(pendingDepositTx.hash, timeout);
+                    spinner.succeed(`nahmii deposit of ${amount} ${currencySymbol} confirmed`);
+
+                    console.error('Please allow a few minutes for the nahmii balance to be updated!');
+
+                    const output = [approveReceipt, completeReceipt].map(reduceReceipt);
+                    console.log(JSON.stringify(output));
+                }
+                else {
+                    console.error(`Insufficient funds! Your network balance is only ${ethers.utils.formatUnits(tokenBalanceBN, decimals)} ${currencySymbol}`);
+                }
             }
         }
         catch (err) {
@@ -70,6 +111,18 @@ module.exports = {
         }
     }
 };
+
+async function determineDecimals(contract) {
+    const dBN = await contract.decimals();
+    return dBN.toNumber();
+}
+
+function validateTimeout(timeout) {
+    timeout = parseInt(timeout);
+    if (timeout <= 0)
+        throw new Error('Timeout must be a number higher than 0.');
+    return timeout;
+}
 
 function validateAmount(amount) {
     let amountBN;
@@ -95,6 +148,9 @@ function validateGasLimit(gas) {
 }
 
 function reduceReceipt(txReceipt) {
+    if (!txReceipt)
+        return null;
+
     // TODO: Fix links when on mainnet
     return {
         transactionHash: txReceipt.transactionHash,
