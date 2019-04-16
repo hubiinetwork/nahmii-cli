@@ -1,6 +1,6 @@
 {
   "name": "nahmii-cli",
-  "version": "1.0.0-beta.27",
+  "version": "1.0.0-beta.28",
   "description": "CLI interface for using the nahmii by hubii protocol",
   "main": "index.js",
   "scripts": {
@@ -41,7 +41,7 @@
   "dependencies": {
     "ethers": "^4.0.27",
     "keythereum": "^1.0.4",
-    "nahmii-sdk": "1.0.0-beta.45",
+    "nahmii-sdk": "1.0.0-beta.48",
     "node-yaml": "^3.2.0",
     "ora": "^3.4.0",
     "readline-sync": "^1.4.9",
