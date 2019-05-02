@@ -3,14 +3,15 @@
 const ethers = require('ethers');
 
 const ropstenAbstractions = require('nahmii-contract-abstractions-ropsten');
-const homesteadAbstractions = require('nahmii-contract-abstractions');
+//const homesteadAbstractions = require('nahmii-contract-abstractions');
 
 function getAbstraction(networkName, contractName) {
     switch (networkName) {
     case 'ropsten':
         return ropstenAbstractions.getAbstraction(contractName);
     case 'homestead':
-        return homesteadAbstractions.getAbstraction(contractName);
+        return require('nahmii-contract-abstractions/build/contracts/RevenueTokenManager');
+        //return homesteadAbstractions.getAbstraction(contractName);
     default:
         throw new Error(`Unknown network name: ${networkName}`);
     }
