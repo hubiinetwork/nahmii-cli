@@ -6,11 +6,23 @@ const ethers = require('ethers');
 const ora = require('ora');
 
 module.exports = {
-    command: 'stage <currency>  [--gas=<gaslimit> --price=<gasPrice in gwei>]',
-    describe: 'Stage all qualified settlement challenges for <currency>',
+    command: 'stage <currency>  [--gas=<gaslimit>] [--price=<gasPrice in gwei>]',
+    describe: 'Stage all qualified settlement(s) for <currency>',
     builder: yargs => {
-        yargs.example('stage ETH', 'Stage all settlement challenges for <currency>');
-        yargs.example('stage HBT', 'Stage all settlement challenges for <currency>');
+        yargs.example('stage ETH', 'Stages qualified settlement(s) for ETH using default gas limit and price.');
+        yargs.example('stage ETH --gas=500000', 'Stages qualified settlement(s) for ETH and sets gas limit to 500000 while using default gas price.');
+        yargs.example('stage ETH --price=2', 'Stages qualified settlement(s) for ETH and sets gas price to 2 Gwei while using default gas limit.');
+        yargs.example('stage HBT', 'Stages qualified settlement(s) for HBT using default gas limit and price.');
+        yargs.option('gas', {
+            desc: 'Gas limit used _per transaction_. Stages can be 1 or more transactions depending on the number of qualified settlement(s).',
+            default: 600000,
+            type: 'number'
+        });
+        yargs.option('price', {
+            desc: 'Gas price used _per transaction_. Stages can be 1 or more transactions depending on the number of qualified settlement(s).',
+            default: 1,
+            type: 'number'
+        });
     },
     handler: async (argv) => {
         const { currency, gas, price } = argv;
@@ -22,11 +34,11 @@ module.exports = {
         try {
             const tokenInfo = await provider.getTokenInfo(currency);
             const gasLimit = parseInt(gas) || null;
-            const gasPrice = price ? ethers.utils.bigNumberify(price).mul(ethers.utils.bigNumberify(10).pow(9)) : null;
+            const gasPrice = ethers.utils.bigNumberify(price).mul(ethers.utils.bigNumberify(10).pow(9));
 
             let wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
             const settlement = new nahmii.Settlement(provider);
-            spinner = ora('Settling qualified challenges').start();
+            spinner.start('Staging qualified settlement(s)');
 
             const {settleableChallenges, invalidReasons} = await settlement.getSettleableChallenges(wallet.address, tokenInfo.currency, 0);
             invalidReasons.forEach(challenge => {
@@ -35,20 +47,20 @@ module.exports = {
             });
 
             if (!settleableChallenges.length) {
-                spinner.warn('There are no qualified challenges to stage the balance. Please check if the ongoing challenges have expired.');
-                spinner.start('Checking ongoing challenges.').start();
+                spinner.warn('There are no qualified settlement(s) to stage the balance. Please check if the ongoing settlement(s) have expired.');
+                spinner.start('Checking ongoing settlement(s).');
                 const ongoingChallenges = await settlement.getOngoingChallenges(wallet.address, tokenInfo.currency, 0);
                 if (!ongoingChallenges.length) {
-                    spinner.info('There are no ongoing challenges.');
+                    spinner.info('There are no ongoing settlement(s).');
                     return;
                 }
 
-                spinner.info('Ongoing challenges:');
+                spinner.info('Ongoing settlement(s):');
                 for (let ongoingChallenge of ongoingChallenges) {
                     const {type, expirationTime, intendedStageAmount} = ongoingChallenge;
                     const {amount} = intendedStageAmount.toJSON();
                     const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
-                    spinner.info(`type: ${type}; Stage amount: ${formattedStageAmount}; Expiration time: ${new Date(expirationTime).toISOString()}`);
+                    spinner.info(`Type: ${type}; Stage amount: ${formattedStageAmount}; Expiration time: ${new Date(expirationTime).toISOString()}`);
                 }
                 return;
             }
@@ -68,7 +80,7 @@ module.exports = {
                 spinner.info(`Staging ${type} settlement with stage amount ${formattedStageAmount} ${currency}.`);
 
                 const currentTx = await settlement.settleBySettleableChallenge(settleableChallenge, wallet, {gasLimit, gasPrice});
-                spinner.start(`Waiting for transaction ${currentTx.hash} to be mined`).start();
+                spinner.start(`Waiting for transaction ${currentTx.hash} to be mined`);
 
                 const txReceipt = await provider.getTransactionConfirmation(currentTx.hash, 300);
                 spinner.succeed(`Updated stage balance(max withdrawal amount). [used gas: ${ethers.utils.bigNumberify(txReceipt.gasUsed).toString()}]`);

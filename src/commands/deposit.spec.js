@@ -145,16 +145,17 @@ describe('Deposit command', () => {
             return depositCmd.handler.call(undefined, {
                 amount: '0.07',
                 currency: 'TT1',
-                gas: 2
+                gas: 2,
+                price: 1
             });
         });
 
         it('tells wallet to approve 0.07 TT1 transfer', () => {
-            expect(stubbedWallet.approveTokenDeposit).to.have.been.calledWith('0.07', 'TT1', {gasLimit: 2, gasPrice: null});
+            expect(stubbedWallet.approveTokenDeposit).to.have.been.calledWith('0.07', 'TT1', {gasLimit: 2, gasPrice: ethers.utils.bigNumberify(1000000000)});
         });
 
         it('tells wallet to complete 0.07 TT1 transfer', () => {
-            expect(stubbedWallet.completeTokenDeposit).to.have.been.calledWith('0.07', 'TT1', {gasLimit: 2, gasPrice: null});
+            expect(stubbedWallet.completeTokenDeposit).to.have.been.calledWith('0.07', 'TT1', {gasLimit: 2, gasPrice: ethers.utils.bigNumberify(1000000000)});
         });
 
         it('outputs correct tx receipts to stdout', () => {
@@ -250,7 +251,8 @@ describe('Deposit command', () => {
                     .call(undefined, {
                         amount: '1.2',
                         currency: 'ETH',
-                        gas: 2
+                        gas: 2,
+                        price: 1
                     })
                     .catch(err => {
                         error = err;
@@ -283,7 +285,8 @@ describe('Deposit command', () => {
                     .call(undefined, {
                         amount: '1.2',
                         currency: 'TT1',
-                        gas: 2
+                        gas: 2,
+                        price: 1
                     })
                     .catch(err => {
                         error = err;
