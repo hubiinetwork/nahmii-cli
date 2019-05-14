@@ -26,15 +26,16 @@ module.exports = {
             const gasPrice = price ? ethers.utils.bigNumberify(price).mul(ethers.utils.bigNumberify(10).pow(9)) : null;
 
             const withdrawAmountBN = ethers.utils.parseUnits(amount, tokenInfo.decimals);
-            const withdrawMonetaryAmount = new nahmii.MonetaryAmount(withdrawAmountBN, tokenInfo.currency, 0);
+            const withdrawMonetaryAmount = nahmii.MonetaryAmount.from(withdrawAmountBN, tokenInfo.currency);
             
-            spinner.start('Waiting for transaction to be broadcast').start();
             const stagedBalanceBN = await wallet.getNahmiiStagedBalance(tokenInfo.symbol);
-
+            
             if (withdrawAmountBN.gt(stagedBalanceBN)) {
                 spinner.fail(`The maximum withdrawal nahmii balance is ${ethers.utils.formatUnits(stagedBalanceBN, tokenInfo.decimals)}`);
                 return;
             }
+
+            spinner.start('Waiting for transaction to be broadcast').start();
 
             const request = await wallet.withdraw(withdrawMonetaryAmount, {gasLimit, gasPrice});
             spinner.succeed(`Transaction broadcast ${request.hash}`);

@@ -3,7 +3,6 @@
 const dbg = require('../dbg');
 const nahmii = require('nahmii-sdk');
 const ethers = require('ethers');
-const moment = require('moment');
 const ora = require('ora');
 
 module.exports = {
@@ -25,7 +24,7 @@ module.exports = {
             const gasPrice = price ? ethers.utils.bigNumberify(price).mul(ethers.utils.bigNumberify(10).pow(9)) : null;
 
             const stageAmountBN = ethers.utils.parseUnits(stageAmount, tokenInfo.decimals);
-            const stageMonetaryAmount = new nahmii.MonetaryAmount(stageAmountBN, tokenInfo.currency, 0);
+            const stageMonetaryAmount = nahmii.MonetaryAmount.from(stageAmountBN, tokenInfo.currency);
             const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
             const settlement = new nahmii.Settlement(provider);
 
@@ -71,7 +70,7 @@ module.exports = {
             spinner.start('Loading details for the ongoing challenges').start();
             const maxChallengeTime = await settlement.getMaxChallengesTimeout(wallet.address, tokenInfo.currency, 0);
             if (maxChallengeTime) 
-                spinner.info(`The end time for the ongoing challenges is ${moment(maxChallengeTime).toISOString()}`);
+                spinner.info(`The end time for the ongoing challenges is ${new Date(maxChallengeTime).toISOString()}`);
         }
         catch (err) {
             dbg(err);

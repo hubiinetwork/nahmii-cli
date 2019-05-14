@@ -4,7 +4,6 @@ const dbg = require('../dbg');
 const nahmii = require('nahmii-sdk');
 const ethers = require('ethers');
 const ora = require('ora');
-const moment = require('moment');
 
 module.exports = {
     command: 'stage <currency>  [--gas=<gaslimit> --price=<gasPrice in gwei>]',
@@ -49,7 +48,7 @@ module.exports = {
                     const {type, expirationTime, intendedStageAmount} = ongoingChallenge;
                     const {amount} = intendedStageAmount.toJSON();
                     const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
-                    spinner.info(`type: ${type}; Stage amount: ${formattedStageAmount}; Expiration time: ${moment(expirationTime).toISOString()}`);
+                    spinner.info(`type: ${type}; Stage amount: ${formattedStageAmount}; Expiration time: ${new Date(expirationTime).toISOString()}`);
                 }
                 return;
             }
