@@ -40,13 +40,20 @@ module.exports = {
             let niiBalance = await niiContract.balanceOf(config.wallet.address);
             dbg(`Opening on-chain balance: ${ethers.utils.formatUnits(niiBalance, 15)} NII`);
 
-            spinner.start(`1/8 - Registering claim for period ${period}`);
-            const releaseTx = await revenueTokenManager.release(period - 1, options);
-            spinner.succeed(`1/8 - Claim registered for period ${period}`);
+            let releaseReceipt;
+            try {
+                spinner.start(`1/8 - Registering claim for period ${period}`);
+                const releaseTx = await revenueTokenManager.release(period - 1, options);
+                spinner.succeed(`1/8 - Claim registered for period ${period}`);
 
-            spinner.start('2/8 - Confirming claim');
-            const releaseReceipt = await provider.getTransactionConfirmation(releaseTx.hash, timeout);
-            spinner.succeed('2/8 - Claim confirmed');
+                spinner.start('2/8 - Confirming claim');
+                releaseReceipt = await provider.getTransactionConfirmation(releaseTx.hash, timeout);
+                spinner.succeed('2/8 - Claim confirmed');
+            }
+            catch (err) {
+                dbg(err);
+                spinner.fail(err.message);
+            }
 
             niiBalance = await niiContract.balanceOf(config.wallet.address);
             dbg(`Depositing: ${ethers.utils.formatUnits(niiBalance, 15)} NII`);
@@ -74,11 +81,11 @@ module.exports = {
 
                 spinner.start(`5/8 - Approving transfer of ${niiBalance} NII`);
                 const pendingApprovalTx = await wallet.approveTokenDeposit(ethers.utils.formatUnits(niiBalance, 15), 'NII', options);
-                spinner.succeed('3/8 - Transfer approval registered');
+                spinner.succeed('5/8 - Transfer approval registered');
 
                 spinner.start('6/8 - Confirming transfer approval');
                 approveReceipt = await provider.getTransactionConfirmation(pendingApprovalTx.hash, timeout);
-                spinner.succeed('4/8 - Transfer approval confirmed');
+                spinner.succeed('6/8 - Transfer approval confirmed');
             }
             else {
                 spinner.succeed('3/8 - Skipped');

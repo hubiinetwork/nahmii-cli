@@ -1,6 +1,7 @@
 'use strict';
 
 const chai = require('chai');
+const sinon = require('sinon');
 const sinonChai = require('sinon-chai');
 const expect = chai.expect;
 chai.use(sinonChai);
@@ -28,9 +29,14 @@ const fakeEthers = {
     Contract
 };
 
+const abstractionFactory = {
+    getAbstraction: sinon.stub()
+};
+
 const RevenueTokenManagerContract = proxyquire('./revenue-token-manager-contract', {
     'ethers': fakeEthers,
-    './abis/ropsten/RevenueTokenManager': fakeContractDeployment
+    'nahmii-contract-abstractions-ropsten': abstractionFactory,
+    'nahmii-contract-abstractions': abstractionFactory
 });
 
 const fakeProvider = {
@@ -45,6 +51,12 @@ const fakeWallet = {
 };
 
 describe('RevenueTokenManagerContract', () => {
+    beforeEach(() => {
+        abstractionFactory.getAbstraction
+            .withArgs('RevenueTokenManager')
+            .returns(fakeContractDeployment);
+    });
+
     [
         ['wallet', fakeWallet],
         ['provider', fakeProvider]
