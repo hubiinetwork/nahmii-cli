@@ -1,9 +1,10 @@
 'use strict';
 
-const dbg = require('../dbg');
 const nahmii = require('nahmii-sdk');
 const ethers = require('ethers');
 const ora = require('ora');
+const dbg = require('../dbg');
+const utils = require('../utils');
 
 module.exports = {
     command: 'withdraw <amount> <currency> [--gas=<gaslimit>] [--price=<gasPrice in gwei>]',
@@ -26,23 +27,22 @@ module.exports = {
     },
     handler: async (argv) => {
         const config = require('../config');
-        const {amount, currency, gas, price} = argv;
-
+        
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
+        const tokenInfo = await provider.getTokenInfo(argv.currency);
+        const amount = utils.parseAmount(argv.amount, tokenInfo.decimals);
+        const gasLimit = utils.parsePositiveInteger(argv.gas);
+        const gasPriceInGwei = utils.parsePositiveInteger(argv.price);
+        const gasPrice = ethers.utils.bigNumberify(gasPriceInGwei).mul(ethers.utils.bigNumberify(10).pow(9));
+
         const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
 
         let spinner = ora();
         try {
-            const tokenInfo = await provider.getTokenInfo(currency);
-            const gasLimit = parseInt(gas) || null;
-            const gasPrice = ethers.utils.bigNumberify(price).mul(ethers.utils.bigNumberify(10).pow(9));
-
-            const withdrawAmountBN = ethers.utils.parseUnits(amount, tokenInfo.decimals);
-            const withdrawMonetaryAmount = nahmii.MonetaryAmount.from(withdrawAmountBN, tokenInfo.currency);
-            
+            const withdrawMonetaryAmount = nahmii.MonetaryAmount.from(amount, tokenInfo.currency);
             const stagedBalanceBN = await wallet.getNahmiiStagedBalance(tokenInfo.symbol);
             
-            if (withdrawAmountBN.gt(stagedBalanceBN)) {
+            if (amount.gt(stagedBalanceBN)) {
                 spinner.fail(`The maximum withdrawal nahmii balance is ${ethers.utils.formatUnits(stagedBalanceBN, tokenInfo.decimals)}`);
                 return;
             }
@@ -54,7 +54,7 @@ module.exports = {
             spinner.start('Waiting for transaction to be mined');
             const txReceipt = await provider.getTransactionConfirmation(request.hash);
             spinner.succeed('Transaction mined');
-            console.log(JSON.stringify([reduceReceipt(txReceipt)]));
+            console.log(JSON.stringify([utils.reduceReceipt(txReceipt)]));
         }
         catch (err) {
             dbg(err);
@@ -66,12 +66,3 @@ module.exports = {
         }
     }
 };
-
-function reduceReceipt(txReceipt) {
-    return {
-        transactionHash: txReceipt.transactionHash,
-        blockNumber: txReceipt.blockNumber,
-        gasUsed: ethers.utils.bigNumberify(txReceipt.gasUsed).toString(),
-        href: `https://ropsten.etherscan.io/tx/${txReceipt.transactionHash}`
-    };
-}

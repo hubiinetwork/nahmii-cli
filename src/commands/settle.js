@@ -1,9 +1,10 @@
 'use strict';
 
-const dbg = require('../dbg');
 const nahmii = require('nahmii-sdk');
 const ethers = require('ethers');
 const ora = require('ora');
+const dbg = require('../dbg');
+const utils = require('../utils');
 
 module.exports = {
     command: 'settle <amount> <currency> [--gas=<gasLimit>] [--price=<gasPrice in gwei>]',
@@ -31,15 +32,14 @@ module.exports = {
         
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
         const tokenInfo = await provider.getTokenInfo(currency);
-        const amount = validateAmount(argv.amount, tokenInfo.decimals);
-        const price = validatePositiveInteger(argv.price);
-        const gasLimit = validatePositiveInteger(argv.gas);
-        const gasPrice = ethers.utils.bigNumberify(price).mul(ethers.utils.bigNumberify(10).pow(9));
+        const amount = utils.parseAmount(argv.amount, tokenInfo.decimals);
+        const gasLimit = utils.parsePositiveInteger(argv.gas);
+        const gasPriceInGwei = utils.parsePositiveInteger(argv.price);
+        const gasPrice = ethers.utils.bigNumberify(gasPriceInGwei).mul(ethers.utils.bigNumberify(10).pow(9));
 
         let spinner = ora();
         try {
-            const stageAmountBN = ethers.utils.parseUnits(amount, tokenInfo.decimals);
-            const stageMonetaryAmount = nahmii.MonetaryAmount.from(stageAmountBN, tokenInfo.currency);
+            const stageMonetaryAmount = nahmii.MonetaryAmount.from(amount, tokenInfo.currency);
             const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
             const settlement = new nahmii.Settlement(provider);
             const balances = await wallet.getNahmiiBalance();
@@ -50,7 +50,7 @@ module.exports = {
             }
 
             const balanceBN = ethers.utils.parseUnits(balance, tokenInfo.decimals);
-            if (balanceBN.lt(stageAmountBN)) {
+            if (balanceBN.lt(amount)) {
                 spinner.fail(`The maximum settleable nahmii balance is ${balance}`);
                 return;
             }
@@ -67,8 +67,7 @@ module.exports = {
     
                 for (let requiredChallenge of requiredChallenges) {
                     const {type, stageMonetaryAmount} = requiredChallenge;
-                    const {amount} = stageMonetaryAmount.toJSON();
-                    const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
+                    const formattedStageAmount = ethers.utils.formatUnits(stageMonetaryAmount.amount, tokenInfo.decimals);
                     spinner.info(`Starting ${type} settlement with stage amount ${formattedStageAmount} ${currency}.`);
                     const currentTx = await settlement.startByRequiredChallenge(requiredChallenge, wallet, {gasLimit, gasPrice});
                     spinner.start(`Waiting for transaction ${currentTx.hash} to be mined`);
@@ -95,26 +94,3 @@ module.exports = {
         }
     }
 };
-
-function validateAmount(amount, decimals) {
-    let amountBN;
-    try {
-        amountBN = ethers.utils.parseUnits(amount, decimals);
-    }
-    catch (err) {
-        dbg(err);
-        throw new TypeError('Amount must be a number!');
-    }
-
-    if (amountBN.eq(0))
-        throw new Error('Amount must be greater than zero!');
-
-    return amount;
-}
-
-function validatePositiveInteger(str) {
-    const number = parseInt(str);
-    if (number <= 0)
-        throw new Error('Gas limit/price must be a number higher than 0');
-    return number;
-}

@@ -1,9 +1,10 @@
 'use strict';
 
-const dbg = require('../dbg');
 const nahmii = require('nahmii-sdk');
 const ethers = require('ethers');
 const ora = require('ora');
+const dbg = require('../dbg');
+const utils = require('../utils');
 
 module.exports = {
     command: 'stage <currency>  [--gas=<gaslimit>] [--price=<gasPrice in gwei>]',
@@ -30,8 +31,8 @@ module.exports = {
         const config = require('../config');
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
         const tokenInfo = await provider.getTokenInfo(currency);
-        const gasLimit = validatePositiveInteger(argv.gas);
-        const price = validatePositiveInteger(argv.price);
+        const gasLimit = utils.parsePositiveInteger(argv.gas);
+        const price = utils.parsePositiveInteger(argv.price);
         const gasPrice = ethers.utils.bigNumberify(price).mul(ethers.utils.bigNumberify(10).pow(9));
 
         let spinner = ora();
@@ -98,10 +99,3 @@ module.exports = {
         }
     }
 };
-
-function validatePositiveInteger(str) {
-    const number = parseInt(str);
-    if (number <= 0)
-        throw new Error('Gas limit/price must be a number higher than 0');
-    return number;
-}

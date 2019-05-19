@@ -161,7 +161,7 @@ describe('Settle command', () => {
         console.log.restore();
     });
 
-    context.only('stage ETH', () => {
+    context('stage ETH', () => {
         beforeEach(() => {
             stubbedSettlement.getSettleableChallenges.resolves({
                 settleableChallenges,
@@ -196,7 +196,7 @@ describe('Settle command', () => {
         });
     });
 
-    context.only('no qualified settlements to settle', () => {
+    context('no qualified settlements to stage', () => {
         beforeEach(() => {
             stubbedSettlement.getSettleableChallenges.resolves({
                 settleableChallenges: [],
@@ -221,7 +221,7 @@ describe('Settle command', () => {
         });
     });
 
-    context.only('no qualified settlements to settle, and there are no ongoing settlements', () => {
+    context('no qualified settlements to stage, and there are no ongoing settlements', () => {
         beforeEach(() => {
             stubbedSettlement.getSettleableChallenges.resolves({
                 settleableChallenges: [],
@@ -250,7 +250,7 @@ describe('Settle command', () => {
         stubbedSettlement.getSettleableChallenges,
         stubbedSettlement.settleBySettleableChallenge
     ].forEach((func)=> {
-        context.only('fail to settle qualified settlements', () => {
+        context('fail to stage qualified settlements', () => {
             let error;
             beforeEach((done) => {
                 stubbedSettlement.getSettleableChallenges.resolves({
