@@ -26,21 +26,22 @@ module.exports = {
         yargs.coerce('amount', arg => arg);
     },
     handler: async (argv) => {
-        const { amount, currency, gas, price } = argv;
+        const { currency } = argv;
         const config = require('../config');
+        
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
+        const tokenInfo = await provider.getTokenInfo(currency);
+        const amount = validateAmount(argv.amount, tokenInfo.decimals);
+        const price = validatePositiveInteger(argv.price);
+        const gasLimit = validatePositiveInteger(argv.gas);
+        const gasPrice = ethers.utils.bigNumberify(price).mul(ethers.utils.bigNumberify(10).pow(9));
 
         let spinner = ora();
         try {
-            const tokenInfo = await provider.getTokenInfo(currency);
-            const gasLimit = parseInt(gas) || null;
-            const gasPrice = price ? ethers.utils.bigNumberify(price).mul(ethers.utils.bigNumberify(10).pow(9)) : null;
-
             const stageAmountBN = ethers.utils.parseUnits(amount, tokenInfo.decimals);
             const stageMonetaryAmount = nahmii.MonetaryAmount.from(stageAmountBN, tokenInfo.currency);
             const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
             const settlement = new nahmii.Settlement(provider);
-
             const balances = await wallet.getNahmiiBalance();
             const balance = balances[currency];
             if (!balance) {
@@ -49,7 +50,6 @@ module.exports = {
             }
 
             const balanceBN = ethers.utils.parseUnits(balance, tokenInfo.decimals);
-
             if (balanceBN.lt(stageAmountBN)) {
                 spinner.fail(`The maximum settleable nahmii balance is ${balance}`);
                 return;
@@ -95,3 +95,26 @@ module.exports = {
         }
     }
 };
+
+function validateAmount(amount, decimals) {
+    let amountBN;
+    try {
+        amountBN = ethers.utils.parseUnits(amount, decimals);
+    }
+    catch (err) {
+        dbg(err);
+        throw new TypeError('Amount must be a number!');
+    }
+
+    if (amountBN.eq(0))
+        throw new Error('Amount must be greater than zero!');
+
+    return amount;
+}
+
+function validatePositiveInteger(str) {
+    const number = parseInt(str);
+    if (number <= 0)
+        throw new Error('Gas limit/price must be a number higher than 0');
+    return number;
+}

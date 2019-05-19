@@ -25,27 +25,28 @@ module.exports = {
         });
     },
     handler: async (argv) => {
-        const { currency, gas, price } = argv;
+        const { currency } = argv;
 
         const config = require('../config');
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
+        const tokenInfo = await provider.getTokenInfo(currency);
+        const gasLimit = validatePositiveInteger(argv.gas);
+        const price = validatePositiveInteger(argv.price);
+        const gasPrice = ethers.utils.bigNumberify(price).mul(ethers.utils.bigNumberify(10).pow(9));
 
         let spinner = ora();
         try {
-            const tokenInfo = await provider.getTokenInfo(currency);
-            const gasLimit = parseInt(gas) || null;
-            const gasPrice = ethers.utils.bigNumberify(price).mul(ethers.utils.bigNumberify(10).pow(9));
-
+            
             let wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
             const settlement = new nahmii.Settlement(provider);
             spinner.start('Staging qualified settlement(s)');
-
+            
             const {settleableChallenges, invalidReasons} = await settlement.getSettleableChallenges(wallet.address, tokenInfo.currency, 0);
             invalidReasons.forEach(challenge => {
                 dbg(`\ncan not stage for type: ${challenge.type}`);
                 challenge.reasons.forEach(reason => dbg('reason:', reason));
             });
-
+            
             if (!settleableChallenges.length) {
                 spinner.warn('There are no qualified settlement(s) to stage the balance. Please check if the ongoing settlement(s) have expired.');
                 spinner.start('Checking ongoing settlement(s).');
@@ -54,7 +55,7 @@ module.exports = {
                     spinner.info('There are no ongoing settlement(s).');
                     return;
                 }
-
+                
                 spinner.info('Ongoing settlement(s):');
                 for (let ongoingChallenge of ongoingChallenges) {
                     const {type, expirationTime, intendedStageAmount} = ongoingChallenge;
@@ -64,7 +65,7 @@ module.exports = {
                 }
                 return;
             }
-
+            
             let totalIntendedStageAmount = settleableChallenges.reduce((accumulator, tx) => {
                 const amount = ethers.utils.bigNumberify(tx.intendedStageAmount.toJSON().amount);
                 return accumulator.add(amount);
@@ -97,3 +98,10 @@ module.exports = {
         }
     }
 };
+
+function validatePositiveInteger(str) {
+    const number = parseInt(str);
+    if (number <= 0)
+        throw new Error('Gas limit/price must be a number higher than 0');
+    return number;
+}
