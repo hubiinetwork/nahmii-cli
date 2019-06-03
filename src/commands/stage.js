@@ -16,7 +16,7 @@ module.exports = {
         yargs.example('stage HBT', 'Stages qualified settlement(s) for HBT using default gas limit and price.');
         yargs.option('gas', {
             desc: 'Gas limit used _per transaction_. Stages can be 1 or more transactions depending on the number of qualified settlement(s).',
-            default: 600000,
+            default: 6000000,
             type: 'number'
         });
         yargs.option('price', {
