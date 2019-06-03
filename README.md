@@ -140,17 +140,23 @@ through `jq` to get a pretty output in the shell.
 Results are printed as JSON. It is recommended to pipe the result
 through `jq` to get a pretty output in the shell.
 
-### Start settlement challenges
+### Start settlements
 
-This will start necessary challenges for the intended stage amount 1 in ETH currency:
+This will start necessary settlements for the intended stage amount 1 in ETH currency:
 
     nahmii settle 1 ETH
 
 ### Stage qualified settlements
 
-This will update stage balance(max withdrawal amount) according to the qualified settlement challenges:
+This will update staged balance(max withdrawal amount) according to the qualified settlements:
 
     nahmii stage ETH
+    
+### Unstage balance
+
+This will convert an amount of staged balance back to available balance:
+
+    nahmii unstage 1 ETH
 
 ### Withdraw
 
