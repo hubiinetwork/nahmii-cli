@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 'use strict';
+const ora = require('ora');
+const spinner = ora();
 
 // eslint-disable-next-line no-unused-vars
 const argv = require('yargs')
@@ -7,12 +9,12 @@ const argv = require('yargs')
     .fail((msg, err) => {
         if (err) {
             if (process.env.LOG_LEVEL === 'debug')
-                console.error(err.stack);
+                spinner.fail(err.stack);
             else
-                console.error('Error: ' + err.message);
+                spinner.fail('Error: ' + err.message);
         }
         else {
-            console.error(msg);
+            spinner.fail(msg);
         }
         process.exit(1);
     })

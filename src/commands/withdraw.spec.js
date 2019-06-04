@@ -8,11 +8,11 @@ chai.use(sinonChai);
 
 const proxyquire = require('proxyquire').noPreserveCache().noCallThru();
 const ethers = require('ethers');
+const {MonetaryAmount} = require('nahmii-sdk');
 
 const stubbedWallet = {
-    depositEth: sinon.stub(),
-    approveTokenDeposit: sinon.stub(),
-    completeTokenDeposit: sinon.stub()
+    withdraw: sinon.stub(),
+    getNahmiiStagedBalance: sinon.stub()
 };
 
 const stubbedConfig = {
@@ -34,29 +34,33 @@ const stubbedProviderInstance = {
     getBlockNumber: sinon.stub(),
     getApiAccessToken: sinon.stub(),
     stopUpdate: sinon.stub(),
-    getTransactionConfirmation: sinon.stub()
+    getTransactionConfirmation: sinon.stub(),
+    getTokenInfo: sinon.stub()
 };
 stubbedProviderInstance.reset = function() {
     this.getBlockNumber.reset();
     this.getApiAccessToken.reset();
     this.stopUpdate.reset();
     this.getTransactionConfirmation.reset();
+    this.getTokenInfo.reset();
 }.bind(stubbedProviderInstance);
 
 const stubbedOra = {
     start: sinon.stub(),
+    stop: sinon.stub(),
     succeed: sinon.stub(),
     fail: sinon.stub()
 };
 stubbedOra.start.returns(stubbedOra);
 
 function proxyquireCommand() {
-    return proxyquire('./deposit', {
+    return proxyquire('./withdraw', {
         'nahmii-sdk': {
             NahmiiProvider: fakeNahmiiProvider,
             Wallet: function() {
                 return stubbedWallet;
-            }
+            },
+            MonetaryAmount
         },
         '../config': stubbedConfig,
         'ora': function() {
@@ -65,8 +69,8 @@ function proxyquireCommand() {
     });
 }
 
-describe('Deposit command', () => {
-    let depositCmd;
+describe('Withdraw command', () => {
+    let withdrawCmd;
     const txReceipt1 = {
         transactionHash: 'tx hash 1',
         blockNumber: 2,
@@ -76,6 +80,11 @@ describe('Deposit command', () => {
         transactionHash: 'tx hash 2',
         blockNumber: 3,
         gasUsed: ethers.utils.bigNumberify(1234)
+    };
+    const tokenInfo = {
+        symbol: 'ETH',
+        ct: '0x0000000000000000000000000000000000000000',
+        decimals: 18
     };
 
     beforeEach(() => {
@@ -93,35 +102,41 @@ describe('Deposit command', () => {
             .returns(txReceipt2);
         stubbedProviderInstance.getBlockNumber.resolves(1);
         stubbedProviderInstance.getApiAccessToken.resolves('nahmii JWT');
+        stubbedProviderInstance.getTokenInfo.resolves({
+            currency: tokenInfo.ct,
+            symbol: tokenInfo.symbol,
+            decimals: tokenInfo.decimals
+        });
         sinon.stub(console, 'log');
-        depositCmd = proxyquireCommand();
-        stubbedWallet.depositEth.resolves({hash: txReceipt1.transactionHash});
-        stubbedWallet.approveTokenDeposit.resolves({hash: txReceipt1.transactionHash});
-        stubbedWallet.completeTokenDeposit.resolves({hash: txReceipt2.transactionHash});
+        withdrawCmd = proxyquireCommand();
+        stubbedWallet.withdraw.resolves({hash: txReceipt1.transactionHash});
+        stubbedWallet.getNahmiiStagedBalance.resolves(ethers.utils.parseUnits('1.2', 18));
     });
 
     afterEach(() => {
-        stubbedWallet.depositEth.reset();
-        stubbedWallet.approveTokenDeposit.reset();
-        stubbedWallet.completeTokenDeposit.reset();
+        stubbedWallet.withdraw.reset();
         stubbedConfig.privateKey.reset();
         fakeNahmiiProvider.from.reset();
         stubbedProviderInstance.reset();
         console.log.restore();
     });
 
-    context('deposit 1.1 ETH', () => {
+    context('withdraw 1.1 ETH', () => {
+        const amount = '1.1';
+        const amountBN = ethers.utils.parseUnits(amount, tokenInfo.decimals);
+        const monetaryAmount = MonetaryAmount.from(amountBN, tokenInfo.ct);
+
         beforeEach(() => {
-            return depositCmd.handler.call(undefined, {
-                amount: '1.1',
-                currency: 'ETH',
+            return withdrawCmd.handler.call(undefined, {
+                amount,
+                currency: tokenInfo.symbol,
                 gas: 2,
                 price: 2
             });
         });
-
-        it('tells wallet to deposit 1.1 ETH', () => {
-            expect(stubbedWallet.depositEth).to.have.been.calledWith('1.1', {gasLimit: 2, gasPrice: ethers.utils.bigNumberify(2000000000)});
+        
+        it('tells wallet to withdraw 1.1 ETH', () => {
+            expect(stubbedWallet.withdraw).to.have.been.calledWith(monetaryAmount, {gasLimit: 2, gasPrice: ethers.utils.bigNumberify(2000000000)});
         });
 
         it('outputs an single receipt to stdout', () => {
@@ -140,49 +155,29 @@ describe('Deposit command', () => {
         });
     });
 
-    context('deposit 0.07 TT1', () => {
+    context('withdraw more than staged balance', () => {
         beforeEach(() => {
-            return depositCmd.handler.call(undefined, {
-                amount: '0.07',
-                currency: 'TT1',
+            return withdrawCmd.handler.call(undefined, {
+                amount: '1.3',
+                currency: tokenInfo.symbol,
                 gas: 2,
-                price: 1
+                price: 2
             });
         });
 
-        it('tells wallet to approve 0.07 TT1 transfer', () => {
-            expect(stubbedWallet.approveTokenDeposit).to.have.been.calledWith('0.07', 'TT1', {gasLimit: 2, gasPrice: ethers.utils.bigNumberify(1000000000)});
+        it('should display maximum withdraw amount error', () => {
+            expect(stubbedOra.fail).to.be.calledWith('The maximum withdrawal nahmii balance is 1.2');
         });
 
-        it('tells wallet to complete 0.07 TT1 transfer', () => {
-            expect(stubbedWallet.completeTokenDeposit).to.have.been.calledWith('0.07', 'TT1', {gasLimit: 2, gasPrice: ethers.utils.bigNumberify(1000000000)});
-        });
-
-        it('outputs correct tx receipts to stdout', () => {
-            expect(console.log).to.have.been.calledWith(JSON.stringify([
-                {
-                    transactionHash: txReceipt1.transactionHash,
-                    blockNumber: txReceipt1.blockNumber,
-                    gasUsed: '123',
-                    href: `https://ropsten.etherscan.io/tx/${txReceipt1.transactionHash}`
-                },
-                {
-                    transactionHash: txReceipt2.transactionHash,
-                    blockNumber: txReceipt2.blockNumber,
-                    gasUsed: '1234',
-                    href: `https://ropsten.etherscan.io/tx/${txReceipt2.transactionHash}`
-                }
-            ]));
-        });
-
-        it('stops token refresh', () => {
+        it('stops token refresh/spinner', () => {
+            expect(stubbedOra.stop).to.have.been.called;
             expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
         });
     });
 
-    context('deposit foo ETH', () => {
+    context('withdraw foo ETH', () => {
         it('yields an error', (done) => {
-            depositCmd.handler
+            withdrawCmd.handler
                 .call(undefined, {
                     amount: 'foo',
                     currency: 'ETH',
@@ -193,24 +188,11 @@ describe('Deposit command', () => {
                     done();
                 });
         });
-
-        it('provider was not instantiated', (done) => {
-            depositCmd.handler
-                .call(undefined, {
-                    amount: 'foo',
-                    currency: 'ETH',
-                    gas: 2
-                })
-                .catch(() => {
-                    expect(fakeNahmiiProvider.from).to.not.have.been.called;
-                    done();
-                });
-        });
     });
 
-    context('deposit 0 ETH', () => {
+    context('withdraw 0 ETH', () => {
         it('yields an error', (done) => {
-            depositCmd.handler
+            withdrawCmd.handler
                 .call(undefined, {
                     amount: '0',
                     currency: 'ETH',
@@ -221,70 +203,22 @@ describe('Deposit command', () => {
                     done();
                 });
         });
-
-        it('provider was not instantiated', (done) => {
-            depositCmd.handler
-                .call(undefined, {
-                    amount: '0',
-                    currency: 'ETH',
-                    gas: 2
-                })
-                .catch(() => {
-                    expect(fakeNahmiiProvider.from).to.not.have.been.called;
-                    done();
-                });
-        });
-
     });
 
     [
         stubbedProviderInstance.getTransactionConfirmation,
-        stubbedWallet.depositEth
-    ].forEach((depositFunc)=> {
-        context('wallet fails to deposit ETH', () => {
+        stubbedWallet.withdraw
+    ].forEach((withdrawFunc)=> {
+        context('wallet fails to withdraw ETH', () => {
             let error;
 
             beforeEach((done) => {
-                depositFunc.reset();
-                depositFunc.rejects(new Error('transaction failed'));
-                depositCmd.handler
+                withdrawFunc.reset();
+                withdrawFunc.rejects(new Error('transaction failed'));
+                withdrawCmd.handler
                     .call(undefined, {
                         amount: '1.2',
                         currency: 'ETH',
-                        gas: 2,
-                        price: 1
-                    })
-                    .catch(err => {
-                        error = err;
-                        done();
-                    });
-            });
-
-            it('yields an error', () => {
-                expect(error.message).to.match(/transaction failed/);
-            });
-
-            it('stops token refresh', () => {
-                expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
-            });
-        });
-    });
-
-    [
-        stubbedProviderInstance.getTransactionConfirmation,
-        stubbedWallet.approveTokenDeposit,
-        stubbedWallet.completeTokenDeposit
-    ].forEach((tokenDepositFunc)=> {
-        context('wallet fails to deposit a token', () => {
-            let error;
-
-            beforeEach((done) => {
-                tokenDepositFunc.reset();
-                tokenDepositFunc.rejects(new Error('transaction failed'));
-                depositCmd.handler
-                    .call(undefined, {
-                        amount: '1.2',
-                        currency: 'TT1',
                         gas: 2,
                         price: 1
                     })

@@ -68,6 +68,16 @@ wallet:
 
 The UTC file is expected to be found in `~/.nahmii/keystore`.
 
+## Settlement and Withdrawal
+
+For withdrawing the nahmii off-chain balances back to the base layer, it will have to go through the settlement processes. The processes will be as following:
+
+1. Start the settlements using the command `settle` with the amount and currency. This will initiate a settlement dispute period, which would last 5 minutes on Ropsten.
+2. Once the settlement period ended, you will need to stage the qualified settlements by using command `stage` to update the _staged_ balance, which is the maximum available amount for withdrawal.
+3. After the _staged balance_ is successfully updated in the second step, the next is to run the command `withdraw` to transfer a certain amount for a currency from the nahmii contracts to your wallet.
+
+For details of the settlement and withdrawal commands, please refer to the example below or the _help_ messages for the commands.
+
 ## Usage
 
 To show the built-in help:
@@ -139,3 +149,28 @@ through `jq` to get a pretty output in the shell.
 
 Results are printed as JSON. It is recommended to pipe the result
 through `jq` to get a pretty output in the shell.
+
+### Start settlements
+
+This will start necessary settlements for the intended stage amount 1 in ETH currency:
+
+    nahmii settle 1 ETH
+
+### Stage qualified settlements
+
+This will update staged balance(max withdrawal amount) according to the qualified settlements:
+
+    nahmii stage ETH
+    
+### Unstage balance
+
+This will convert an amount of staged balance back to nahmii off-chain balance:
+
+    nahmii unstage 1 ETH
+
+### Withdraw
+
+This will withdraw 1 ETH from staged balance to base layer:
+
+    nahmii withdraw 1 ETH
+
