@@ -28,17 +28,18 @@ module.exports = {
     handler: async (argv) => {
         const config = require('../config');
 
-        const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
-        const tokenInfo = await provider.getTokenInfo(argv.currency);
-        
-        const amount = utils.parseAmount(argv.amount, tokenInfo.decimals);
-        const gasLimit = utils.parsePositiveInteger(argv.gas);
-        const gasPriceInGwei = utils.parsePositiveInteger(argv.price);
-        const gasPrice = ethers.utils.bigNumberify(gasPriceInGwei).mul(ethers.utils.bigNumberify(10).pow(9));
-        const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
-
+        let provider;
         let spinner = ora();
         try {
+            provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
+            const tokenInfo = await provider.getTokenInfo(argv.currency);
+            
+            const amount = utils.parseAmount(argv.amount, tokenInfo.decimals);
+            const gasLimit = utils.parsePositiveInteger(argv.gas);
+            const gasPriceInGwei = utils.parsePositiveInteger(argv.price);
+            const gasPrice = ethers.utils.bigNumberify(gasPriceInGwei).mul(ethers.utils.bigNumberify(10).pow(9));
+            const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
+
             const unstageMonetaryAmount = nahmii.MonetaryAmount.from(amount, tokenInfo.currency);
             const stagedBalanceBN = await wallet.getNahmiiStagedBalance(tokenInfo.symbol);
             

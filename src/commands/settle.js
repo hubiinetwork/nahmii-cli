@@ -30,15 +30,16 @@ module.exports = {
         const { currency } = argv;
         const config = require('../config');
         
-        const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
-        const tokenInfo = await provider.getTokenInfo(currency);
-        const amount = utils.parseAmount(argv.amount, tokenInfo.decimals);
-        const gasLimit = utils.parsePositiveInteger(argv.gas);
-        const gasPriceInGwei = utils.parsePositiveInteger(argv.price);
-        const gasPrice = ethers.utils.bigNumberify(gasPriceInGwei).mul(ethers.utils.bigNumberify(10).pow(9));
-
+        let provider;
         let spinner = ora();
         try {
+            provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
+            const tokenInfo = await provider.getTokenInfo(currency);
+            const amount = utils.parseAmount(argv.amount, tokenInfo.decimals);
+            const gasLimit = utils.parsePositiveInteger(argv.gas);
+            const gasPriceInGwei = utils.parsePositiveInteger(argv.price);
+            const gasPrice = ethers.utils.bigNumberify(gasPriceInGwei).mul(ethers.utils.bigNumberify(10).pow(9));
+
             const stageMonetaryAmount = nahmii.MonetaryAmount.from(amount, tokenInfo.currency);
             const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
             const settlement = new nahmii.Settlement(provider);
