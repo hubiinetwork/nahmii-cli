@@ -68,6 +68,16 @@ wallet:
 
 The UTC file is expected to be found in `~/.nahmii/keystore`.
 
+## Settlement and Withdrawal
+
+For withdrawing the nahmii off-chain balances back to the base layer, it will have to go through the settlement processes. The processes will be as following:
+
+1. Start the settlements using the command `settle` with the amount and currency. This will initiate a settlement dispute period, which would last 5 minutes on Ropsten.
+2. Once the settlement period ended, you will need to stage the qualified settlements by using command `stage` to update the _staged_ balance, which is the maximum available amount for withdrawal.
+3. After the _staged balance_ is successfully updated in the second step, the next is to run the command `withdraw` to transfer a certain amount for a currency from the nahmii contracts to your wallet.
+
+For details of the settlement and withdrawal commands, please refer to the example below or the _help_ messages for the commands.
+
 ## Usage
 
 To show the built-in help:
@@ -77,14 +87,6 @@ To show the built-in help:
 or to show help for a specific sub-command:
 
     nahmii <command> --help
-
-For withdrawing the nahmii off-chain balances back to the base layer, it will have to go through the settlement processes. The processes will be as following:
-
-1. Start the settlements using the command `settle` with the amount and currency. This will initiate a settlement dispute period, which would last 5 minutes on Ropsten.
-2. Once the settlement period ended, you will need to stage the qualified settlements by using command `stage` to update the _staged_ balance, which is the maximum available amount for withdrawal.
-3. After the _staged balance_ is successfully updated in the second step, the next is to run the command `withdraw` to transfer a certain amount for a currency from the nahmii contracts to your wallet.
-
-For details of the settlement and withdrawal commands, please refer to the example below or the _help_ messages for the commands.
 
 ### Initialize configuration
 
