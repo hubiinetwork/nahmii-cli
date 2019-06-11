@@ -29,7 +29,7 @@ module.exports = {
         const config = require('../config');
 
         let provider;
-        let spinner = ora();
+        const spinner = ora();
         try {
             provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
             const tokenInfo = await provider.getTokenInfo(argv.currency);

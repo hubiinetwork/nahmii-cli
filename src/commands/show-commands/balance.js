@@ -12,8 +12,8 @@ module.exports = {
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
 
         try {
-            let wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
-            let balances = await wallet.getNahmiiBalance();
+            const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
+            const balances = await wallet.getNahmiiBalance();
             console.log(JSON.stringify(balances));
         }
         catch (err) {

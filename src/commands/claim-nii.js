@@ -32,7 +32,7 @@ module.exports = {
         const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
         const niiContract = await nahmii.Erc20Contract.from('NII', wallet);
 
-        let spinner = ora();
+        const spinner = ora();
         try {
             const RevenueTokenManagerContract = require('../contracts/revenue-token-manager-contract');
             const revenueTokenManager = new RevenueTokenManagerContract(wallet);
@@ -113,7 +113,7 @@ module.exports = {
             throw new Error(`Claiming NII failed: ${err.message}`);
         }
         finally {
-            let niiBalance = ethers.utils.formatUnits(await niiContract.balanceOf(config.wallet.address), 15);
+            const niiBalance = ethers.utils.formatUnits(await niiContract.balanceOf(config.wallet.address), 15);
             dbg(`Closing on-chain balance: ${niiBalance} NII`);
 
             provider.stopUpdate();

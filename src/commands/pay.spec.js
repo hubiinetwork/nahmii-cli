@@ -103,7 +103,7 @@ describe('Pay command', () => {
         const expectedPrivateKey = 'a private key';
 
         beforeEach(async () => {
-            let cmd = proxyquireCommand().handler;
+            const cmd = proxyquireCommand().handler;
             stubbedProviderInstance.getSupportedTokens
                 .resolves([testCurrency.hbt, testCurrency.wtf]);
             stubbedMonetaryAmount.from
@@ -151,7 +151,7 @@ describe('Pay command', () => {
         const expectedPrivateKey = 'a private key';
 
         beforeEach(async () => {
-            let cmd = proxyquireCommand().handler;
+            const cmd = proxyquireCommand().handler;
             stubbedMonetaryAmount.from
                 .withArgs(ethers.utils.parseEther('1.1'), '0x' + '00'.repeat(20))
                 .returns(fakeMoney);

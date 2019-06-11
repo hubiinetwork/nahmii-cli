@@ -34,7 +34,7 @@ module.exports = {
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
         const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
 
-        let spinner = ora();
+        const spinner = ora();
         try {
             if (argv.currency.toUpperCase() === 'ETH') {
                 spinner.start('Waiting for transaction to be broadcast');

@@ -31,7 +31,7 @@ module.exports = {
         const config = require('../config');
         
         let provider;
-        let spinner = ora();
+        const spinner = ora();
         try {
             provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
             const tokenInfo = await provider.getTokenInfo(currency);
@@ -66,7 +66,7 @@ module.exports = {
             if (requiredChallenges.length) {
                 spinner.info(`Need to start ${requiredChallenges.length} settlement(s).`);
     
-                for (let requiredChallenge of requiredChallenges) {
+                for (const requiredChallenge of requiredChallenges) {
                     const {type, stageMonetaryAmount} = requiredChallenge;
                     const formattedStageAmount = ethers.utils.formatUnits(stageMonetaryAmount.amount, tokenInfo.decimals);
                     spinner.info(`Starting ${type} settlement with stage amount ${formattedStageAmount} ${currency}.`);

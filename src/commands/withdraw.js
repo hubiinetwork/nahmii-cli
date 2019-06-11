@@ -37,7 +37,7 @@ module.exports = {
 
         const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
 
-        let spinner = ora();
+        const spinner = ora();
         try {
             const withdrawMonetaryAmount = nahmii.MonetaryAmount.from(amount, tokenInfo.currency);
             const stagedBalanceBN = await wallet.getNahmiiStagedBalance(tokenInfo.symbol);
