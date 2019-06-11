@@ -38,7 +38,7 @@ module.exports = {
         const address = readlineSync.question('wallet address: [] ');
         const secret = readlineSync.question('wallet pass phrase: [] ');
 
-        let config = {apiRoot, appId, appSecret, wallet: {address, secret}};
+        const config = {apiRoot, appId, appSecret, wallet: {address, secret}};
 
         yaml.writeSync(configFile, config);
         console.log('Template configuration created: ' + configFile);

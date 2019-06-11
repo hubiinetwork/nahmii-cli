@@ -29,7 +29,7 @@ module.exports = {
         const { currency } = argv;
         const config = require('../config');
         let provider;        
-        let spinner = ora();
+        const spinner = ora();
         try {
             provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
             const tokenInfo = await provider.getTokenInfo(currency);
@@ -37,7 +37,7 @@ module.exports = {
             const price = utils.parsePositiveInteger(argv.price);
             const gasPrice = ethers.utils.bigNumberify(price).mul(ethers.utils.bigNumberify(10).pow(9));
             
-            let wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
+            const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
             const settlement = new nahmii.Settlement(provider);
             spinner.start('Staging qualified settlement(s)');
             
@@ -57,7 +57,7 @@ module.exports = {
                 }
                 
                 spinner.info('Ongoing settlement(s):');
-                for (let ongoingChallenge of ongoingChallenges) {
+                for (const ongoingChallenge of ongoingChallenges) {
                     const {type, expirationTime, intendedStageAmount} = ongoingChallenge;
                     const {amount} = intendedStageAmount.toJSON();
                     const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
@@ -74,7 +74,7 @@ module.exports = {
 
             spinner.info(`There are ${settleableChallenges.length} settlement(s) ready to be staged with total stage amount ${totalIntendedStageAmount}`);
 
-            for (let settleableChallenge of settleableChallenges) {
+            for (const settleableChallenge of settleableChallenges) {
                 const {type, intendedStageAmount} = settleableChallenge;
                 const {amount} = intendedStageAmount.toJSON();
                 const formattedStageAmount = ethers.utils.formatUnits(amount, tokenInfo.decimals);
