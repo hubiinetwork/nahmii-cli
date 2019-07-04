@@ -29,7 +29,7 @@ module.exports = {
     handler: async (argv) => {
         const { currency } = argv;
         const config = require('../config');
-        
+
         let provider;
         const spinner = ora();
         try {
@@ -65,16 +65,25 @@ module.exports = {
 
             if (requiredChallenges.length) {
                 spinner.info(`Need to start ${requiredChallenges.length} settlement(s).`);
-    
+
+                const txReceipts = [];
+
                 for (const requiredChallenge of requiredChallenges) {
                     const {type, stageMonetaryAmount} = requiredChallenge;
                     const formattedStageAmount = ethers.utils.formatUnits(stageMonetaryAmount.amount, tokenInfo.decimals);
                     spinner.info(`Starting ${type} settlement with stage amount ${formattedStageAmount} ${currency}.`);
                     const currentTx = await settlement.startByRequiredChallenge(requiredChallenge, wallet, {gasLimit, gasPrice});
                     spinner.start(`Waiting for transaction ${currentTx.hash} to be mined`);
+
                     const txReceipt = await provider.getTransactionConfirmation(currentTx.hash, 300);
+                    delete txReceipt.logsBloom;
+                    delete txReceipt.logs;
+                    txReceipts.push(txReceipt);
+
                     spinner.succeed(`Successfully started settlement: ${currentTx.hash} [gas used: ${ethers.utils.bigNumberify(txReceipt.gasUsed).toString()}]`);
                 }
+
+                console.log(JSON.stringify(txReceipts));
             }
             else {
                 spinner.warn('Can not start new settlement(s). Please check if the ongoing settlement(s) have expired.');
@@ -82,7 +91,7 @@ module.exports = {
 
             spinner.start('Loading details for the ongoing settlement(s)');
             const maxChallengeTime = await settlement.getMaxChallengesTimeout(wallet.address, tokenInfo.currency, 0);
-            if (maxChallengeTime) 
+            if (maxChallengeTime)
                 spinner.info(`The end time for the ongoing settlement(s) is ${new Date(maxChallengeTime).toISOString()}`);
         }
         catch (err) {
