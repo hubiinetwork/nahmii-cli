@@ -3,6 +3,7 @@
 const path = require('path');
 const fs = require('fs');
 const yaml = require('node-yaml');
+const {JSON_SCHEMA} = require('js-yaml');
 const keythereum = require('keythereum');
 const homedir = require('os').homedir();
 const {prefix0x} = require('nahmii-sdk').utils;
@@ -17,7 +18,7 @@ const stats = fs.statSync(configPath);
 if ((stats.mode & 0o77) !== 0)
     console.error('WARNING: Config file should only be readable by the owner!');
 
-const cfg = yaml.readSync(configPath, {schema: yaml.schema.json});
+const cfg = yaml.readSync(configPath, {schema: JSON_SCHEMA});
 if (!cfg) {
     console.error('Unable to load config file: ' + configPath);
     process.exit(-1);
