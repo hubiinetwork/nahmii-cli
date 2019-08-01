@@ -39,11 +39,13 @@
     "nahmii": "src/main.js"
   },
   "dependencies": {
+    "bson": "1.1.1",
     "ethers": "^4.0.27",
     "keythereum": "^1.0.4",
     "nahmii-contract-abstractions": "2.0.3",
     "nahmii-contract-abstractions-ropsten": "3.0.1",
-    "nahmii-sdk": "^2.3.0",
+    "nahmii-ethereum-address": "^2.0.1",
+    "nahmii-sdk": "~2.4.1",
     "node-yaml": "^3.2.0",
     "ora": "^3.4.0",
     "readline-sync": "^1.4.9",
