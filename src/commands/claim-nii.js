@@ -6,13 +6,19 @@ const ethers = require('ethers');
 const ora = require('ora');
 
 module.exports = {
-    command: 'claim nii for period <period> [--gas=<gaslimit>] [--timeout=<seconds>]',
+    command: 'claim nii for period <period> [--gas=<gaslimit>] [--price=<gasPrice in gwei>] [--timeout=<seconds>]',
     describe: 'Claims NII tokens from the time locked revenue token manager and deposits all NII to nahmii. Will only work if wallet is beneficiary of contract.',
     builder: yargs => {
         yargs.example('claim nii for period 1', 'Claims NII tokens for time locked period 1 (December 2018).');
+        yargs.example('claim nii for period 1 --price=32', 'Claims NII tokens for period 1 paying 32 GWEI as gas price.');
         yargs.option('gas', {
             desc: 'Gas limit used _per on-chain transaction_.',
             default: 800000,
+            type: 'number'
+        });
+        yargs.option('price', {
+            desc: 'Gas price used _per transaction_. Deposits can be 1 or more transactions depending on the type of currency.',
+            default: 12,
             type: 'number'
         });
         yargs.options('timeout', {
@@ -23,9 +29,12 @@ module.exports = {
     },
     handler: async (argv) => {
         const period = validatePeriod(argv.period);
-        const gasLimit = validateGasLimit(argv.gas);
+        const gasLimit = validateGasLimit(argv.gas || 800000);
         const timeout = validateTimeout(argv.timeout);
-        const options = {gasLimit};
+        const gasPriceGWEI = validateGasPrice(argv.price || 12);
+
+        const gasPrice = ethers.utils.parseUnits(gasPriceGWEI.toString(), 'gwei');
+        const options = {gasLimit, gasPrice};
 
         const config = require('../config');
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
@@ -120,6 +129,13 @@ module.exports = {
         }
     }
 };
+
+function validateGasPrice(priceGWei) {
+    const price = parseInt(priceGWei);
+    if (price <= 0)
+        throw new Error('Gas price must be a number higher than 0.');
+    return price;
+}
 
 function validateGasLimit(gas) {
     const gasLimit = parseInt(gas);
