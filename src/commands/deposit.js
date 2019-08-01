@@ -29,7 +29,10 @@ module.exports = {
         const amount = validateAmount(argv.amount);
         const gasLimit = validatePositiveInteger(argv.gas);
         const gasPriceInGwei = validatePositiveInteger(argv.price);
-        const gasPrice = ethers.utils.bigNumberify(gasPriceInGwei).mul(ethers.utils.bigNumberify(10).pow(9));
+
+        const gasPrice = ethers.utils.parseUnits(gasPriceInGwei.toString(), 'gwei');
+        const options = {gasLimit, gasPrice};
+
         const config = require('../config');
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
         const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
@@ -38,7 +41,7 @@ module.exports = {
         try {
             if (argv.currency.toUpperCase() === 'ETH') {
                 spinner.start('Waiting for transaction to be broadcast');
-                const { hash } = await wallet.depositEth(amount, {gasLimit, gasPrice});
+                const { hash } = await wallet.depositEth(amount, options);
                 spinner.succeed(`Transaction broadcast ${hash}`);
 
                 spinner.start('Waiting for transaction to be mined');
@@ -49,7 +52,7 @@ module.exports = {
             }
             else {
                 spinner.start('Waiting for transaction 1/2 to be broadcast');
-                const pendingApprovalTx = await wallet.approveTokenDeposit(argv.amount, argv.currency, {gasLimit, gasPrice});
+                const pendingApprovalTx = await wallet.approveTokenDeposit(argv.amount, argv.currency, options);
                 spinner.succeed(`Transaction 1/2 broadcast ${pendingApprovalTx.hash}`);
 
                 spinner.start('Waiting for transaction 1/2 to be mined');
@@ -57,7 +60,7 @@ module.exports = {
                 spinner.succeed('Transaction 1/2 mined');
 
                 spinner.start('Waiting for transaction 2/2 to be broadcast').start();
-                const pendingCompleteTx = await wallet.completeTokenDeposit(argv.amount, argv.currency, {gasLimit, gasPrice});
+                const pendingCompleteTx = await wallet.completeTokenDeposit(argv.amount, argv.currency, options);
                 spinner.succeed(`Transaction 2/2 broadcast ${pendingCompleteTx.hash}`);
 
                 spinner.start('Waiting for transaction 2/2 to be mined');

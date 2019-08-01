@@ -229,6 +229,30 @@ describe('Claim NII command', () => {
                 });
             });
         });
+
+        context('with specified gas price', () => {
+            let priceGWEI;
+
+            beforeEach(() => {
+                priceGWEI = '23';
+            });
+
+            context('claim nii for period 1', () => {
+                beforeEach(() => {
+                    return cmd.handler.call(undefined, {
+                        period: '1',
+                        price: priceGWEI
+                    });
+                });
+
+                it('releases fund for period 0 in RevenueTokenManager using gas price', () => {
+                    expect(stubbedRevenueTokenManager.release).to.have.been.calledWith(0, {
+                        gasLimit: 800000,
+                        gasPrice: ethers.utils.bigNumberify(23000000000)
+                    });
+                });
+            });
+        });
     });
 
     context('mining fails', () => {
