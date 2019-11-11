@@ -1,6 +1,6 @@
 {
   "name": "nahmii-cli",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "CLI interface for using the nahmii by hubii protocol",
   "main": "index.js",
   "scripts": {
@@ -44,9 +44,9 @@
     "js-yaml": "^3.13.1",
     "keythereum": "^1.0.4",
     "nahmii-contract-abstractions": "2.1.4",
-    "nahmii-contract-abstractions-ropsten": "3.1.5",
+    "nahmii-contract-abstractions-ropsten": "3.1.6",
     "nahmii-ethereum-address": "^2.1.0",
-    "nahmii-sdk": "3.1.1",
+    "nahmii-sdk": "4.0.0",
     "node-yaml": "^4.0.1",
     "ora": "^3.4.0",
     "readline-sync": "^1.4.10",
