@@ -40,9 +40,9 @@ module.exports = {
             const gasPriceInGwei = utils.parsePositiveInteger(argv.price);
             const gasPrice = ethers.utils.bigNumberify(gasPriceInGwei).mul(ethers.utils.bigNumberify(10).pow(9));
 
-            const stageMonetaryAmount = nahmii.MonetaryAmount.from(amount, tokenInfo.currency);
+            const stageMonetaryAmount = nahmii.MonetaryAmount.from(amount.toString(), tokenInfo.currency);
             const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
-            const settlement = new nahmii.Settlement(provider);
+            const settlement = new nahmii.SettlementFactory(provider);
             const balances = await wallet.getNahmiiBalance();
             const balance = balances[currency];
             if (!balance) {
@@ -56,46 +56,31 @@ module.exports = {
                 return;
             }
 
-            spinner.start('Calculating the required settlement(s) for the intended stage amount');
-            const {requiredChallenges, invalidReasons} = await settlement.getRequiredChallengesForIntendedStageAmount(stageMonetaryAmount, wallet.address);
-            invalidReasons.forEach(challenge => {
-                dbg(`\ncan not settle for type: ${challenge.type}`);
-                challenge.reasons.forEach(reason => dbg('reason:', reason));
+            spinner.start('Checking incompleted settlement(s)');
+            const registeredSettlements = await settlement.getAllSettlements(wallet.address, tokenInfo.currency);
+            const incompletedSettlements = registeredSettlements.filter(s => !s.isCompleted);
+            spinner.info(`Has ${incompletedSettlements.length} incompleted settlement(s):`);
+            incompletedSettlements.forEach(s => {
+                console.log(JSON.stringify({...s.toJSON(), expirationTime: new Date(s.expirationTime).toISOString()}, undefined, 2));
             });
+            
+            spinner.start('Calculating the required settlement(s) for the intended stage amount');
+            const requiredSettlements = await settlement.calculateRequiredSettlements(wallet.address, stageMonetaryAmount);
+            spinner.info(`Need to start ${requiredSettlements.length} settlement(s).`);
 
-            if (requiredChallenges.length) {
-                spinner.info(`Need to start ${requiredChallenges.length} settlement(s).`);
+            for (const requiredSettlement of requiredSettlements) {
+                const formattedStageAmount = ethers.utils.formatUnits(requiredSettlement.stageAmount, tokenInfo.decimals);
+                spinner.info(`Starting ${requiredSettlement.type} settlement with stage amount ${formattedStageAmount} ${currency}.`);
+                const {hash} = await requiredSettlement.start(wallet, {gasLimit, gasPrice});
+                spinner.start(`Waiting for transaction ${hash} to be mined`);
 
-                const txReceipts = [];
-
-                for (const requiredChallenge of requiredChallenges) {
-                    const {type, stageMonetaryAmount} = requiredChallenge;
-                    const formattedStageAmount = ethers.utils.formatUnits(stageMonetaryAmount.amount, tokenInfo.decimals);
-                    spinner.info(`Starting ${type} settlement with stage amount ${formattedStageAmount} ${currency}.`);
-                    const currentTx = await settlement.startByRequiredChallenge(requiredChallenge, wallet, {gasLimit, gasPrice});
-                    spinner.start(`Waiting for transaction ${currentTx.hash} to be mined`);
-
-                    const txReceipt = await provider.getTransactionConfirmation(currentTx.hash, 300);
-                    delete txReceipt.logsBloom;
-                    delete txReceipt.logs;
-                    txReceipts.push(txReceipt);
-
-                    spinner.succeed(`Successfully started settlement: ${currentTx.hash} [gas used: ${ethers.utils.bigNumberify(txReceipt.gasUsed).toString()}]`);
-                }
-
-                console.log(JSON.stringify(txReceipts));
+                const txReceipt = await provider.getTransactionConfirmation(hash, 300);
+                spinner.succeed(`Successfully started settlement: ${hash} [gas used: ${ethers.utils.bigNumberify(txReceipt.gasUsed).toString()}]`);
             }
-            else {
-                spinner.warn('Can not start new settlement(s). Please check if the ongoing settlement(s) have expired.');
-            }
-
-            spinner.start('Loading details for the ongoing settlement(s)');
-            const maxChallengeTime = await settlement.getMaxChallengesTimeout(wallet.address, tokenInfo.currency, 0);
-            if (maxChallengeTime)
-                spinner.info(`The end time for the ongoing settlement(s) is ${new Date(maxChallengeTime).toISOString()}`);
         }
         catch (err) {
             dbg(err);
+            spinner.warn('Can not prepare for new settlement(s). Please check if there are incompleted settlements.');
             throw new Error(`Unable to start settlement: ${err.message}`);
         }
         finally {

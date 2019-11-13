@@ -45,17 +45,15 @@ stubbedProviderInstance.reset = function() {
     this.getTokenInfo.reset();
 }.bind(stubbedProviderInstance);
 
-const stubbedSettlement = {
-    getSettleableChallenges: sinon.stub(),
-    getOngoingChallenges: sinon.stub(),
-    settleBySettleableChallenge: sinon.stub()
+const stubbedSettlementFactory = {
+    getAllSettlements: sinon.stub(),
+    calculateRequiredSettlements: sinon.stub()
 };
 
-stubbedSettlement.reset = function() {
-    this.getSettleableChallenges.reset();
-    this.getOngoingChallenges.reset();
-    this.settleBySettleableChallenge.reset();
-}.bind(stubbedSettlement);
+stubbedSettlementFactory.reset = function() {
+    this.getAllSettlements.reset();
+    this.calculateRequiredSettlements.reset();
+}.bind(stubbedSettlementFactory);
 
 const stubbedOra = {
     start: sinon.stub(),
@@ -82,8 +80,8 @@ function proxyquireCommand() {
             Wallet: function() {
                 return stubbedWallet;
             },
-            Settlement: function() {
-                return stubbedSettlement;
+            SettlementFactory: function() {
+                return stubbedSettlementFactory;
             },
             MonetaryAmount
         },
@@ -94,7 +92,7 @@ function proxyquireCommand() {
     });
 }
 
-describe('Settle command', () => {
+describe('stage command', () => {
     let stageCmd;
     const txReceipt1 = {
         transactionHash: 'tx hash 1',
@@ -109,23 +107,11 @@ describe('Settle command', () => {
     const txRequest1 = {
         hash: 'tx hash 1'
     };
+    const txRequest2 = {
+        hash: 'tx hash 2'
+    };
     const currency = '0x0000000000000000000000000000000000000000';
-    const settleableChallenges = [
-        {type: 'payment-driip', intendedStageAmount: MonetaryAmount.from(ethers.utils.parseUnits('1.0', 18), currency)},
-        {type: 'null', intendedStageAmount: MonetaryAmount.from(ethers.utils.parseUnits('0.1', 18), currency)}
-    ];
-    const ongoingChallenges = [
-        {
-            type: 'payment-driip',
-            expirationTime: new Date(1),
-            intendedStageAmount: MonetaryAmount.from(ethers.utils.parseUnits('1.0', 18), currency)
-        },
-        {
-            type: 'null',
-            expirationTime: new Date(1),
-            intendedStageAmount: MonetaryAmount.from(ethers.utils.parseUnits('0.1', 18), currency)
-        }
-    ];
+    let stageableSettlements;
 
     beforeEach(() => {
         stubbedConfig.privateKey
@@ -163,12 +149,23 @@ describe('Settle command', () => {
 
     context('stage ETH', () => {
         beforeEach(() => {
-            stubbedSettlement.getSettleableChallenges.resolves({
-                settleableChallenges,
-                invalidReasons: []
-            });
-            stubbedSettlement.getOngoingChallenges.resolves(ongoingChallenges);
-            stubbedSettlement.settleBySettleableChallenge.resolves(txRequest1);
+            stageableSettlements = [
+                {
+                    type: 'payment', 
+                    stageAmount: ethers.utils.parseUnits('1.0', 18),
+                    currency,
+                    isStageable: true,
+                    stage: sinon.stub().resolves(txRequest1)
+                },
+                {
+                    type: 'onchain-balance', 
+                    stageAmount: ethers.utils.parseUnits('0.1', 18),
+                    currency,
+                    isStageable: true,
+                    stage: sinon.stub().resolves(txRequest2)
+                }
+            ];
+            stubbedSettlementFactory.getAllSettlements.resolves(stageableSettlements);
             return stageCmd.handler.call(undefined, {
                 currency: 'ETH',
                 gas: 2,
@@ -177,9 +174,8 @@ describe('Settle command', () => {
         });
 
         it('should settle qualified settlements', () => {
-            for(const settleableChallenge of settleableChallenges) {
-                expect(stubbedSettlement.settleBySettleableChallenge).to.have.been.calledWith(
-                    settleableChallenge, 
+            for(const stageableSettlement of stageableSettlements) {
+                expect(stageableSettlement.stage).to.have.been.calledWith(
                     stubbedWallet,
                     {
                         gasLimit: 2, 
@@ -198,11 +194,23 @@ describe('Settle command', () => {
 
     context('no qualified settlements to stage', () => {
         beforeEach(() => {
-            stubbedSettlement.getSettleableChallenges.resolves({
-                settleableChallenges: [],
-                invalidReasons: []
-            });
-            stubbedSettlement.getOngoingChallenges.resolves(ongoingChallenges);
+            const stageableSettlements = [
+                {
+                    type: 'payment', 
+                    stageAmount: ethers.utils.parseUnits('1.0', 18),
+                    currency,
+                    isOngoing: true,
+                    expirationTime: new Date(1)
+                },
+                {
+                    type: 'onchain-balance', 
+                    stageAmount: ethers.utils.parseUnits('0.1', 18),
+                    currency,
+                    isOngoing: true,
+                    expirationTime: new Date(1)
+                }
+            ];
+            stubbedSettlementFactory.getAllSettlements.resolves(stageableSettlements);
             return stageCmd.handler.call(undefined, {
                 currency: 'ETH',
                 gas: 2,
@@ -211,8 +219,9 @@ describe('Settle command', () => {
         });
 
         it('should display message to show ongoing settlements', () => {
-            expect(stubbedOra.info).to.be.calledWith('Type: payment-driip; Stage amount: 1.0; Expiration time: 1970-01-01T00:00:00.001Z');
-            expect(stubbedOra.info).to.be.calledWith('Type: null; Stage amount: 0.1; Expiration time: 1970-01-01T00:00:00.001Z');
+            expect(stubbedOra.info).to.be.calledWith('Ongoing settlement(s):');
+            expect(stubbedOra.info).to.be.calledWith('Type: payment; Stage amount: 1.0; Expiration time: 1970-01-01T00:00:00.001Z');
+            expect(stubbedOra.info).to.be.calledWith('Type: onchain-balance; Stage amount: 0.1; Expiration time: 1970-01-01T00:00:00.001Z');
         });
 
         it('stops token refresh/spinner', () => {
@@ -223,11 +232,7 @@ describe('Settle command', () => {
 
     context('no qualified settlements to stage, and there are no ongoing settlements', () => {
         beforeEach(() => {
-            stubbedSettlement.getSettleableChallenges.resolves({
-                settleableChallenges: [],
-                invalidReasons: []
-            });
-            stubbedSettlement.getOngoingChallenges.resolves([]);
+            stubbedSettlementFactory.getAllSettlements.resolves([]);
             return stageCmd.handler.call(undefined, {
                 currency: 'ETH',
                 gas: 2,
@@ -245,36 +250,25 @@ describe('Settle command', () => {
         });
     });
 
-    [
-        stubbedProviderInstance.getTransactionConfirmation,
-        stubbedSettlement.getSettleableChallenges,
-        stubbedSettlement.settleBySettleableChallenge
-    ].forEach((func)=> {
-        context('fail to stage qualified settlements', () => {
-            let error;
-            beforeEach((done) => {
-                stubbedSettlement.getSettleableChallenges.resolves({
-                    settleableChallenges,
-                    invalidReasons: []
-                });
-                stubbedSettlement.getOngoingChallenges.resolves(ongoingChallenges);
-                stubbedSettlement.settleBySettleableChallenge.resolves(txRequest1);
-                func.reset();
-                func.rejects(new Error('failed'));
-                stageCmd.handler.call(undefined, {
-                    currency: 'ETH',
-                    gas: 2,
-                    price: 2
-                }).catch(err => {
-                    error = err;
-                    done();
-                });
+    context('fail to stage qualified settlements', () => {
+        let error;
+        beforeEach((done) => {
+            stubbedSettlementFactory.getAllSettlements.throws(new Error('failed'));
+            stageCmd.handler.call(undefined, {
+                currency: 'ETH',
+                gas: 2,
+                price: 2
+            }).catch(err => {
+                error = err;
+                done();
             });
+        });
 
+        describe('when #getAllSettlements failed', () => {
             it('yields an error', () => {
                 expect(error.message).to.match(/failed/);
             });
-
+    
             it('stops token refresh/spinner', () => {
                 expect(stubbedOra.stop).to.have.been.called;
                 expect(stubbedProviderInstance.stopUpdate).to.have.been.called;

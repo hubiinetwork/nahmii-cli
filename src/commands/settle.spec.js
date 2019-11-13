@@ -45,17 +45,15 @@ stubbedProviderInstance.reset = function() {
     this.getTokenInfo.reset();
 }.bind(stubbedProviderInstance);
 
-const stubbedSettlement = {
-    getRequiredChallengesForIntendedStageAmount: sinon.stub(),
-    startByRequiredChallenge: sinon.stub(),
-    getMaxChallengesTimeout: sinon.stub()
+const stubbedSettlementFactory = {
+    calculateRequiredSettlements: sinon.stub(),
+    getAllSettlements: sinon.stub()
 };
 
-stubbedSettlement.reset = function() {
-    this.getRequiredChallengesForIntendedStageAmount.reset();
-    this.startByRequiredChallenge.reset();
-    this.getMaxChallengesTimeout.reset();
-}.bind(stubbedSettlement);
+stubbedSettlementFactory.reset = function() {
+    this.calculateRequiredSettlements.reset();
+    this.getAllSettlements.reset();
+}.bind(stubbedSettlementFactory);
 
 const stubbedOra = {
     start: sinon.stub(),
@@ -82,8 +80,8 @@ function proxyquireCommand() {
             Wallet: function() {
                 return stubbedWallet;
             },
-            Settlement: function() {
-                return stubbedSettlement;
+            SettlementFactory: function() {
+                return stubbedSettlementFactory;
             },
             MonetaryAmount
         },
@@ -94,8 +92,14 @@ function proxyquireCommand() {
     });
 }
 
-describe('Settle command', () => {
+describe('settle command', () => {
     let settleCmd;
+    const txRequest1 = {
+        hash: 'tx hash 1'
+    };
+    const txRequest2 = {
+        hash: 'tx hash 1'
+    };
     const txReceipt1 = {
         transactionHash: 'tx hash 1',
         blockNumber: 2,
@@ -106,14 +110,11 @@ describe('Settle command', () => {
         blockNumber: 3,
         gasUsed: ethers.utils.bigNumberify(1234)
     };
-    const txRequest1 = {
-        hash: 'tx hash 1'
+    const currency = {
+        ct: '0x0000000000000000000000000000000000000000',
+        id: '0'
     };
-    const currency = '0x0000000000000000000000000000000000000000';
-    const requiredSettlements = [
-        {type: 'payment-driip', stageMonetaryAmount: MonetaryAmount.from(ethers.utils.parseUnits('1.0', 18), currency)},
-        {type: 'null', stageMonetaryAmount: MonetaryAmount.from(ethers.utils.parseUnits('0.1', 18), currency)}
-    ];
+    let requiredSettlements;
 
     beforeEach(() => {
         stubbedConfig.privateKey
@@ -151,11 +152,24 @@ describe('Settle command', () => {
 
     context('settle 1.1 ETH', () => {
         beforeEach(() => {
-            stubbedSettlement.getRequiredChallengesForIntendedStageAmount.resolves({
-                requiredChallenges: requiredSettlements,
-                invalidReasons: []
-            });
-            stubbedSettlement.startByRequiredChallenge.resolves(txRequest1);
+            requiredSettlements = [
+                {
+                    type: 'payment', 
+                    stageAmount: ethers.utils.parseUnits('1.0', 18),
+                    currency,
+                    start: sinon.stub().resolves(txRequest1), 
+                    stage: sinon.stub()
+                },
+                {
+                    type: 'onchain-balance', 
+                    stageAmount: ethers.utils.parseUnits('0.1', 18),
+                    currency,
+                    start: sinon.stub().resolves(txRequest2), 
+                    stage: sinon.stub()
+                }
+            ];
+            stubbedSettlementFactory.getAllSettlements.resolves([]);
+            stubbedSettlementFactory.calculateRequiredSettlements.resolves(requiredSettlements);
             return settleCmd.handler.call(undefined, {
                 amount: '1.1',
                 currency: 'ETH',
@@ -164,10 +178,9 @@ describe('Settle command', () => {
             });
         });
 
-        it('should started required settlements', () => {
+        it('starts required settlements', () => {
             for(const requiredSettlement of requiredSettlements) {
-                expect(stubbedSettlement.startByRequiredChallenge).to.have.been.calledWith(
-                    requiredSettlement, 
+                expect(requiredSettlement.start).to.have.been.calledWith(
                     stubbedWallet,
                     {
                         gasLimit: 2, 
@@ -184,21 +197,22 @@ describe('Settle command', () => {
     });
 
     context('no valid settlements to start with', () => {
-        beforeEach(() => {
-            stubbedSettlement.getRequiredChallengesForIntendedStageAmount.resolves({
-                requiredChallenges: [],
-                invalidReasons: []
-            });
-            return settleCmd.handler.call(undefined, {
-                amount: '1.1',
-                currency: 'ETH',
-                gas: 2,
-                price: 2
-            });
+        beforeEach(async () => {
+            stubbedSettlementFactory.getAllSettlements.resolves([]);
+            stubbedSettlementFactory.calculateRequiredSettlements.throws(new Error());
+            try {
+                await settleCmd.handler.call(undefined, {
+                    amount: '1.1',
+                    currency: 'ETH',
+                    gas: 2,
+                    price: 2
+                });
+            }
+            catch (e) {return;}
         });
 
         it('should display message to indicate not being able to start new settlements', () => {
-            expect(stubbedOra.warn).to.be.calledWith('Can not start new settlement(s). Please check if the ongoing settlement(s) have expired.');
+            expect(stubbedOra.warn).to.be.calledWith('Can not prepare for new settlement(s). Please check if there are incompleted settlements.');
         });
 
         it('stops token refresh/spinner', () => {
@@ -248,18 +262,12 @@ describe('Settle command', () => {
     });
 
     [
-        stubbedProviderInstance.getTransactionConfirmation,
-        stubbedSettlement.getRequiredChallengesForIntendedStageAmount,
-        stubbedSettlement.startByRequiredChallenge
-    ].forEach((func)=> {
-        context('fail to start settlements', () => {
+        ['getAllSettlements', stubbedSettlementFactory.getAllSettlements],
+        ['calculateRequiredSettlements', stubbedSettlementFactory.calculateRequiredSettlements]
+    ].forEach(([name, func])=> {
+        context(`when ${name} failed`, () => {
             let error;
             beforeEach((done) => {
-                stubbedSettlement.getRequiredChallengesForIntendedStageAmount.resolves({
-                    requiredChallenges: requiredSettlements,
-                    invalidReasons: []
-                });
-                stubbedSettlement.startByRequiredChallenge.resolves(txRequest1);
                 func.reset();
                 func.rejects(new Error('failed'));
                 settleCmd.handler.call(undefined, {
