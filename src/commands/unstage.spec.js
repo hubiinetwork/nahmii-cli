@@ -90,7 +90,7 @@ describe('Unstage command', () => {
     beforeEach(() => {
         stubbedConfig.privateKey
             .withArgs(stubbedConfig.wallet.secret)
-            .returns('privatekey');
+            .resolves('privatekey');
         fakeNahmiiProvider.from
             .withArgs(stubbedConfig.apiRoot, stubbedConfig.appId, stubbedConfig.appSecret)
             .resolves(stubbedProviderInstance);
