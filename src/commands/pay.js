@@ -12,7 +12,8 @@ module.exports = {
     handler: async (argv) => {
         const config = require('../config');
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
-        const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
+        const privateKey = await config.privateKey(config.wallet.secret);
+        const wallet = new nahmii.Wallet(privateKey, provider);
 
         try {
             const currencyDefinition = await getCurrencyBySymbol(provider, argv.currency);

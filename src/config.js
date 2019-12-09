@@ -2,11 +2,10 @@
 
 const path = require('path');
 const fs = require('fs');
+const ethers = require('ethers');
 const yaml = require('node-yaml');
 const {JSON_SCHEMA} = require('js-yaml');
-const keythereum = require('keythereum');
 const homedir = require('os').homedir();
-const {prefix0x} = require('nahmii-sdk').utils;
 
 const configPath = path.resolve(homedir, '.nahmii/config.yaml');
 if (!fs.existsSync(configPath)) {
@@ -25,10 +24,10 @@ if (!cfg) {
 }
 cfg.file = configPath;
 
-cfg.privateKey = (secret) => {
-//    console.debug(`Using key '${cfg.wallet.address}' for signing.`);
-    const keyObject = keythereum.importFromFile(cfg.wallet.address, path.resolve(homedir, '.nahmii'));
-    return prefix0x(keythereum.recover(secret, keyObject).toString('hex'));
+cfg.privateKey = async (secret) => {
+    const keystore = fs.readFileSync(path.join(homedir, '.nahmii', 'keystore', cfg.wallet.address));
+    const wallet = await ethers.Wallet.fromEncryptedJson(keystore, secret);
+    return wallet.privateKey;
 };
 
 module.exports = cfg;

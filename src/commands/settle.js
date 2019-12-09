@@ -41,7 +41,8 @@ module.exports = {
             const gasPrice = ethers.utils.bigNumberify(gasPriceInGwei).mul(ethers.utils.bigNumberify(10).pow(9));
 
             const stageMonetaryAmount = nahmii.MonetaryAmount.from(amount.toString(), tokenInfo.currency);
-            const wallet = new nahmii.Wallet(config.privateKey(config.wallet.secret), provider);
+            const privateKey = await config.privateKey(config.wallet.secret);
+            const wallet = new nahmii.Wallet(privateKey, provider);
             const settlement = new nahmii.SettlementFactory(provider);
             const balances = await wallet.getNahmiiBalance();
             const balance = balances[currency];

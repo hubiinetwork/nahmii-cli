@@ -122,7 +122,7 @@ describe('Pay command', () => {
                 .returns(fakePayment);
             stubbedConfig.privateKey
                 .withArgs(stubbedConfig.wallet.secret)
-                .returns(expectedPrivateKey);
+                .resolves(expectedPrivateKey);
             await cmd({
                 amount: '1000',
                 currency: 'HBT',
@@ -165,7 +165,7 @@ describe('Pay command', () => {
                 ).returns(fakePayment);
             stubbedConfig.privateKey
                 .withArgs(stubbedConfig.wallet.secret)
-                .returns(expectedPrivateKey);
+                .resolves(expectedPrivateKey);
             await cmd({
                 amount: '1.1',
                 currency: 'ETH',

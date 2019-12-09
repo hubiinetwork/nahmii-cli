@@ -1,6 +1,6 @@
 {
   "name": "nahmii-cli",
-  "version": "1.1.9",
+  "version": "1.1.10",
   "description": "CLI interface for using the nahmii by hubii protocol",
   "main": "index.js",
   "scripts": {
@@ -42,7 +42,6 @@
     "bson": "1.1.1",
     "ethers": "^4.0.37",
     "js-yaml": "^3.13.1",
-    "keythereum": "^1.0.4",
     "nahmii-contract-abstractions": "2.1.4",
     "nahmii-contract-abstractions-ropsten": "3.1.6",
     "nahmii-ethereum-address": "^2.1.0",
