@@ -109,7 +109,7 @@ describe('Pay command', () => {
             stubbedMonetaryAmount.from
                 .withArgs(
                     ethers.utils.parseUnits('1000', testCurrency.hbt.decimals),
-                    testCurrency.hbt.currency,
+                    testCurrency.hbt.currency
                 )
                 .returns(fakeMoney);
             stubbedPayment
