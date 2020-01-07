@@ -25,10 +25,11 @@ if (!cfg) {
 cfg.file = configPath;
 
 cfg.privateKey = async (secret) => {
-    var files = fs.readdirSync(path.join(homedir, '.nahmii', 'keystore'));
-    const matchedFile = files.filter(f => f.toLowerCase().endsWith(cfg.wallet.address.toLowerCase()))[0];
+    const files = fs.readdirSync(path.join(homedir, '.nahmii', 'keystore'));
+    const regex = new RegExp(cfg.wallet.address.replace('0x', ''), 'i');
+    const matchedFile = files.filter(f => f.match(regex)).shift();
     if (!matchedFile) 
-        throw new Error(`keystore file for wallet ${cfg.wallet.address} not exists.`);
+        throw new Error(`Unable to find keystore file for wallet ${cfg.wallet.address}`);
     
     const keystore = fs.readFileSync(path.join(homedir, '.nahmii', 'keystore', matchedFile));
     const wallet = await ethers.Wallet.fromEncryptedJson(keystore, secret);
