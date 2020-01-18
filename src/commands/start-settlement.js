@@ -7,7 +7,7 @@ const dbg = require('../dbg');
 const utils = require('../utils');
 
 module.exports = {
-    command: 'settle <amount> <currency> [--gas=<gasLimit>] [--price=<gasPrice in gwei>]',
+    command: 'start settlement <amount> <currency> [--gas=<gasLimit>] [--price=<gasPrice in gwei>]',
     describe: 'Start settlement(s) for <amount> <currency>',
     builder: yargs => {
         yargs.example('settle 1 ETH', 'Start settlement(s) for 1 Ether using default gas limit and price.');

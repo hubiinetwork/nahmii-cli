@@ -46,13 +46,13 @@ stubbedProviderInstance.reset = function() {
 }.bind(stubbedProviderInstance);
 
 const stubbedSettlementFactory = {
-    getAllSettlements: sinon.stub(),
-    calculateRequiredSettlements: sinon.stub()
+    calculateRequiredSettlements: sinon.stub(),
+    getAllSettlements: sinon.stub()
 };
 
 stubbedSettlementFactory.reset = function() {
-    this.getAllSettlements.reset();
     this.calculateRequiredSettlements.reset();
+    this.getAllSettlements.reset();
 }.bind(stubbedSettlementFactory);
 
 const stubbedOra = {
@@ -74,7 +74,7 @@ stubbedOra.reset = function() {
 stubbedOra.start.returns(stubbedOra);
 
 function proxyquireCommand() {
-    return proxyquire('./stage', {
+    return proxyquire('./start-settlement', {
         'nahmii-sdk': {
             NahmiiProvider: fakeNahmiiProvider,
             Wallet: function() {
@@ -92,8 +92,14 @@ function proxyquireCommand() {
     });
 }
 
-describe('stage command', () => {
-    let stageCmd;
+describe('settle command', () => {
+    let settleCmd;
+    const txRequest1 = {
+        hash: 'tx hash 1'
+    };
+    const txRequest2 = {
+        hash: 'tx hash 1'
+    };
     const txReceipt1 = {
         transactionHash: 'tx hash 1',
         blockNumber: 2,
@@ -104,14 +110,11 @@ describe('stage command', () => {
         blockNumber: 3,
         gasUsed: ethers.utils.bigNumberify(1234)
     };
-    const txRequest1 = {
-        hash: 'tx hash 1'
+    const currency = {
+        ct: '0x0000000000000000000000000000000000000000',
+        id: '0'
     };
-    const txRequest2 = {
-        hash: 'tx hash 2'
-    };
-    const currency = '0x0000000000000000000000000000000000000000';
-    let stageableSettlements;
+    let requiredSettlements;
 
     beforeEach(() => {
         stubbedConfig.privateKey
@@ -134,7 +137,7 @@ describe('stage command', () => {
             decimals: 18
         });
         sinon.stub(console, 'log');
-        stageCmd = proxyquireCommand();
+        settleCmd = proxyquireCommand();
         stubbedWallet.getNahmiiBalance.resolves({ETH: '1.2'});
     });
 
@@ -147,35 +150,37 @@ describe('stage command', () => {
         console.log.restore();
     });
 
-    context('stage ETH', () => {
+    context('settle 1.1 ETH', () => {
         beforeEach(() => {
-            stageableSettlements = [
+            requiredSettlements = [
                 {
                     type: 'payment', 
                     stageAmount: ethers.utils.parseUnits('1.0', 18),
                     currency,
-                    isStageable: true,
-                    stage: sinon.stub().resolves(txRequest1)
+                    start: sinon.stub().resolves(txRequest1), 
+                    stage: sinon.stub()
                 },
                 {
                     type: 'onchain-balance', 
                     stageAmount: ethers.utils.parseUnits('0.1', 18),
                     currency,
-                    isStageable: true,
-                    stage: sinon.stub().resolves(txRequest2)
+                    start: sinon.stub().resolves(txRequest2), 
+                    stage: sinon.stub()
                 }
             ];
-            stubbedSettlementFactory.getAllSettlements.resolves(stageableSettlements);
-            return stageCmd.handler.call(undefined, {
+            stubbedSettlementFactory.getAllSettlements.resolves([]);
+            stubbedSettlementFactory.calculateRequiredSettlements.resolves(requiredSettlements);
+            return settleCmd.handler.call(undefined, {
+                amount: '1.1',
                 currency: 'ETH',
                 gas: 2,
                 price: 2
             });
         });
 
-        it('should settle qualified settlements', () => {
-            for(const stageableSettlement of stageableSettlements) {
-                expect(stageableSettlement.stage).to.have.been.calledWith(
+        it('starts required settlements', () => {
+            for(const requiredSettlement of requiredSettlements) {
+                expect(requiredSettlement.start).to.have.been.calledWith(
                     stubbedWallet,
                     {
                         gasLimit: 2, 
@@ -183,7 +188,6 @@ describe('stage command', () => {
                     }
                 );
             }
-            expect(stubbedOra.info).to.have.been.calledWith('There are 2 settlement(s) ready to be staged with total stage amount 1.1');
         });
 
         it('stops token refresh/spinner', () => {
@@ -192,56 +196,23 @@ describe('stage command', () => {
         });
     });
 
-    context('no qualified settlements to stage', () => {
-        beforeEach(() => {
-            const stageableSettlements = [
-                {
-                    type: 'payment', 
-                    stageAmount: ethers.utils.parseUnits('1.0', 18),
-                    currency,
-                    isOngoing: true,
-                    expirationTime: new Date(1)
-                },
-                {
-                    type: 'onchain-balance', 
-                    stageAmount: ethers.utils.parseUnits('0.1', 18),
-                    currency,
-                    isOngoing: true,
-                    expirationTime: new Date(1)
-                }
-            ];
-            stubbedSettlementFactory.getAllSettlements.resolves(stageableSettlements);
-            return stageCmd.handler.call(undefined, {
-                currency: 'ETH',
-                gas: 2,
-                price: 2
-            });
-        });
-
-        it('should display message to show ongoing settlements', () => {
-            expect(stubbedOra.info).to.be.calledWith('Ongoing settlement(s):');
-            expect(stubbedOra.info).to.be.calledWith('Type: payment; Stage amount: 1.0; Expiration time: 1970-01-01T00:00:00.001Z');
-            expect(stubbedOra.info).to.be.calledWith('Type: onchain-balance; Stage amount: 0.1; Expiration time: 1970-01-01T00:00:00.001Z');
-        });
-
-        it('stops token refresh/spinner', () => {
-            expect(stubbedOra.stop).to.have.been.called;
-            expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
-        });
-    });
-
-    context('no qualified settlements to stage, and there are no ongoing settlements', () => {
-        beforeEach(() => {
+    context('no valid settlements to start with', () => {
+        beforeEach(async () => {
             stubbedSettlementFactory.getAllSettlements.resolves([]);
-            return stageCmd.handler.call(undefined, {
-                currency: 'ETH',
-                gas: 2,
-                price: 2
-            });
+            stubbedSettlementFactory.calculateRequiredSettlements.throws(new Error());
+            try {
+                await settleCmd.handler.call(undefined, {
+                    amount: '1.1',
+                    currency: 'ETH',
+                    gas: 2,
+                    price: 2
+                });
+            }
+            catch (e) {return;}
         });
 
-        it('should display message to indicate no ongoing settlements exist', () => {
-            expect(stubbedOra.info).to.be.calledWith('There are no ongoing settlement(s).');
+        it('should display message to indicate not being able to start new settlements', () => {
+            expect(stubbedOra.warn).to.be.calledWith('Can not prepare for new settlement(s). Please check if there are incompleted settlements.');
         });
 
         it('stops token refresh/spinner', () => {
@@ -250,29 +221,106 @@ describe('stage command', () => {
         });
     });
 
-    context('fail to stage qualified settlements', () => {
-        let error;
-        beforeEach((done) => {
-            stubbedSettlementFactory.getAllSettlements.throws(new Error('failed'));
-            stageCmd.handler.call(undefined, {
+    context('settle more than available balance', () => {
+        beforeEach(() => {
+            return settleCmd.handler.call(undefined, {
+                amount: '1.3',
                 currency: 'ETH',
                 gas: 2,
                 price: 2
-            }).catch(err => {
-                error = err;
-                done();
             });
         });
 
-        describe('when #getAllSettlements failed', () => {
+        it('should display maximum settleable balance error', () => {
+            expect(stubbedOra.fail).to.be.calledWith('The maximum settleable nahmii balance is 1.2');
+        });
+
+        it('stops token refresh/spinner', () => {
+            expect(stubbedOra.stop).to.have.been.called;
+            expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
+        });
+    });
+
+    context('settle on non exist assets', () => {
+        beforeEach(() => {
+            return settleCmd.handler.call(undefined, {
+                amount: '1.1',
+                currency: 'ABC',
+                gas: 2,
+                price: 2
+            });
+        });
+
+        it('should no available balance error', () => {
+            expect(stubbedOra.fail).to.be.calledWith('No nahmii balance available for ABC');
+        });
+
+        it('stops token refresh/spinner', () => {
+            expect(stubbedOra.stop).to.have.been.called;
+            expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
+        });
+    });
+
+    [
+        ['getAllSettlements', stubbedSettlementFactory.getAllSettlements],
+        ['calculateRequiredSettlements', stubbedSettlementFactory.calculateRequiredSettlements]
+    ].forEach(([name, func])=> {
+        context(`when ${name} failed`, () => {
+            let error;
+            beforeEach((done) => {
+                func.reset();
+                func.rejects(new Error('failed'));
+                settleCmd.handler.call(undefined, {
+                    amount: '1.1',
+                    currency: 'ETH',
+                    gas: 2,
+                    price: 2
+                }).catch(err => {
+                    error = err;
+                    done();
+                });
+            });
+
             it('yields an error', () => {
                 expect(error.message).to.match(/failed/);
             });
-    
+
             it('stops token refresh/spinner', () => {
                 expect(stubbedOra.stop).to.have.been.called;
                 expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
             });
+        });
+    });
+
+    context('settle foo ETH', () => {
+        it('yields an error', (done) => {
+            settleCmd.handler
+                .call(undefined, {
+                    amount: 'foo',
+                    currency: 'ETH',
+                    gas: 2,
+                    price: 2
+                })
+                .catch(err => {
+                    expect(err.message).to.match(/amount.*number/i);
+                    done();
+                });
+        });
+    });
+
+    context('settle 0 ETH', () => {
+        it('yields an error', (done) => {
+            settleCmd.handler
+                .call(undefined, {
+                    amount: '0',
+                    currency: 'ETH',
+                    gas: 2,
+                    price: 2
+                })
+                .catch(err => {
+                    expect(err.message).to.match(/amount.*zero/i);
+                    done();
+                });
         });
     });
 });
