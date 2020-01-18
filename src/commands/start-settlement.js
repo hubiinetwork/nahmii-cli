@@ -7,12 +7,12 @@ const dbg = require('../dbg');
 const utils = require('../utils');
 
 module.exports = {
-    command: 'start settlement <amount> <currency> [--gas=<gasLimit>] [--price=<gasPrice in gwei>]',
+    command: 'start settlement for <amount> <currency> [--gas=<gasLimit>] [--price=<gasPrice in gwei>]',
     describe: 'Start settlement(s) for <amount> <currency>',
     builder: yargs => {
-        yargs.example('settle 1 ETH', 'Start settlement(s) for 1 Ether using default gas limit and price.');
-        yargs.example('settle 1 ETH --gas=500000', 'Start settlement(s) for 1 Ether and sets gas limit to 500000 while using default gas price.');
-        yargs.example('settle 1 ETH --price=2', 'Start settlement(s) for 1 Ether and sets gas price to 2 Gwei while using default gas limit.');
+        yargs.example('start settlement for 1 ETH', 'Start settlement(s) for 1 Ether using default gas limit and price.');
+        yargs.example('start settlement for 1 ETH --gas=500000', 'Start settlement(s) for 1 Ether and sets gas limit to 500000 while using default gas price.');
+        yargs.example('start settlement for 1 ETH --price=2', 'Start settlement(s) for 1 Ether and sets gas price to 2 Gwei while using default gas limit.');
         yargs.example('settle 1000 HBT', 'Start settlement(s) for 1000 Hubiits (HBT) using default gas limit and price.');
         yargs.option('gas', {
             desc: 'Gas limit used _per transaction_. Settles can be 1 or more transactions depending on the stage amount.',

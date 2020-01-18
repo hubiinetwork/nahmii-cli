@@ -7,13 +7,13 @@ const dbg = require('../dbg');
 const utils = require('../utils');
 
 module.exports = {
-    command: 'complete settlement <currency>  [--gas=<gaslimit>] [--price=<gasPrice in gwei>]',
+    command: 'complete settlement for <currency>  [--gas=<gaslimit>] [--price=<gasPrice in gwei>]',
     describe: 'Complete all qualified settlement(s) for <currency>',
     builder: yargs => {
-        yargs.example('stage ETH', 'Complete qualified settlement(s) for ETH using default gas limit and price.');
-        yargs.example('stage ETH --gas=500000', 'Complete qualified settlement(s) for ETH and sets gas limit to 500000 while using default gas price.');
-        yargs.example('stage ETH --price=2', 'Complete qualified settlement(s) for ETH and sets gas price to 2 Gwei while using default gas limit.');
-        yargs.example('stage HBT', 'Complete qualified settlement(s) for HBT using default gas limit and price.');
+        yargs.example('complete settlement for ETH', 'Complete qualified settlement(s) for ETH using default gas limit and price.');
+        yargs.example('complete settlement for ETH --gas=500000', 'Complete qualified settlement(s) for ETH and sets gas limit to 500000 while using default gas price.');
+        yargs.example('complete settlement for ETH --price=2', 'Complete qualified settlement(s) for ETH and sets gas price to 2 Gwei while using default gas limit.');
+        yargs.example('complete settlement for HBT', 'Complete qualified settlement(s) for HBT using default gas limit and price.');
         yargs.option('gas', {
             desc: 'Gas limit used _per transaction_. This action can introduce 1 or more transactions depending on the number of qualified settlement(s).',
             default: 6000000,
