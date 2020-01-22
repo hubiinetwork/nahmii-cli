@@ -10,7 +10,7 @@ module.exports = {
     describe: 'Claims NII tokens from the time locked revenue token manager and deposits all NII to nahmii. Will only work if wallet is beneficiary of contract.',
     builder: yargs => {
         yargs.example('claim nii for period 1', 'Claims NII tokens for time locked period 1 (December 2018).');
-        yargs.example('claim nii for period 1 --price=32', 'Claims NII tokens for period 1 paying 32 GWEI as gas price.');
+        yargs.example('claim nii for period 1 --price=32', 'Claims NII tokens for period 1 paying 32 Gwei as gas price.');
         yargs.option('gas', {
             desc: 'Gas limit used _per on-chain transaction_.',
             default: 800000,
@@ -21,7 +21,7 @@ module.exports = {
             default: 12,
             type: 'number'
         });
-        yargs.options('timeout', {
+        yargs.option('timeout', {
             desc: 'Number of seconds to wait for each on-chain transaction to be mined.',
             default: 60,
             type: 'number'
