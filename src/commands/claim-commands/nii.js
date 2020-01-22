@@ -1,12 +1,12 @@
 'use strict';
 
-const dbg = require('../dbg');
+const dbg = require('../../dbg');
 const nahmii = require('nahmii-sdk');
 const ethers = require('ethers');
 const ora = require('ora');
 
 module.exports = {
-    command: 'claim nii for period <period> [--gas=<gaslimit>] [--price=<gasPrice in gwei>] [--timeout=<seconds>]',
+    command: 'nii for period <period> [--gas=<gaslimit>] [--price=<gasPrice in gwei>] [--timeout=<seconds>]',
     describe: 'Claims NII tokens from the time locked revenue token manager and deposits all NII to nahmii. Will only work if wallet is beneficiary of contract.',
     builder: yargs => {
         yargs.example('claim nii for period 1', 'Claims NII tokens for time locked period 1 (December 2018).');
@@ -36,7 +36,7 @@ module.exports = {
         const gasPrice = ethers.utils.parseUnits(gasPriceGWEI.toString(), 'gwei');
         const options = {gasLimit, gasPrice};
 
-        const config = require('../config');
+        const config = require('../../config');
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
         const privateKey = await config.privateKey(config.wallet.secret);
         const wallet = new nahmii.Wallet(privateKey, provider);
@@ -44,7 +44,7 @@ module.exports = {
 
         const spinner = ora();
         try {
-            const RevenueTokenManagerContract = require('../contracts/revenue-token-manager-contract');
+            const RevenueTokenManagerContract = require('../../contracts/revenue-token-manager-contract');
             const revenueTokenManager = new RevenueTokenManagerContract(wallet);
 
             let niiBalance = await niiContract.balanceOf(config.wallet.address);

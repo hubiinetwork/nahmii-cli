@@ -74,7 +74,7 @@ stubbedNiiContract.reset = function() {
 }.bind(stubbedNiiContract);
 
 function proxyquireCommand() {
-    return proxyquire('./claim-nii', {
+    return proxyquire('./nii', {
         'nahmii-sdk': {
             NahmiiProvider: fakeNahmiiProvider,
             Wallet: function() {
@@ -82,11 +82,11 @@ function proxyquireCommand() {
             },
             Erc20Contract: erc20contractClass
         },
-        '../config': stubbedConfig,
+        '../../config': stubbedConfig,
         'ora': function() {
             return stubbedOra;
         },
-        '../contracts/revenue-token-manager-contract': function() {
+        '../../contracts/revenue-token-manager-contract': function() {
             return stubbedRevenueTokenManager;
         }
     });
