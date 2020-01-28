@@ -1,16 +1,16 @@
 'use strict';
 
-const dbg = require('../dbg');
+const dbg = require('../../dbg');
 const nahmii = require('nahmii-sdk');
 const ethers = require('ethers');
 const ora = require('ora');
 
 module.exports = {
-    command: 'claim nii for period <period> [--gas=<gaslimit>] [--price=<gasPrice in gwei>] [--timeout=<seconds>]',
+    command: 'nii for period <period> [--gas=<gaslimit>] [--price=<gasPrice in gwei>] [--timeout=<seconds>]',
     describe: 'Claims NII tokens from the time locked revenue token manager and deposits all NII to nahmii. Will only work if wallet is beneficiary of contract.',
     builder: yargs => {
         yargs.example('claim nii for period 1', 'Claims NII tokens for time locked period 1 (December 2018).');
-        yargs.example('claim nii for period 1 --price=32', 'Claims NII tokens for period 1 paying 32 GWEI as gas price.');
+        yargs.example('claim nii for period 1 --price=32', 'Claims NII tokens for period 1 paying 32 Gwei as gas price.');
         yargs.option('gas', {
             desc: 'Gas limit used _per on-chain transaction_.',
             default: 800000,
@@ -21,7 +21,7 @@ module.exports = {
             default: 12,
             type: 'number'
         });
-        yargs.options('timeout', {
+        yargs.option('timeout', {
             desc: 'Number of seconds to wait for each on-chain transaction to be mined.',
             default: 60,
             type: 'number'
@@ -36,7 +36,7 @@ module.exports = {
         const gasPrice = ethers.utils.parseUnits(gasPriceGWEI.toString(), 'gwei');
         const options = {gasLimit, gasPrice};
 
-        const config = require('../config');
+        const config = require('../../config');
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
         const privateKey = await config.privateKey(config.wallet.secret);
         const wallet = new nahmii.Wallet(privateKey, provider);
@@ -44,7 +44,7 @@ module.exports = {
 
         const spinner = ora();
         try {
-            const RevenueTokenManagerContract = require('../contracts/revenue-token-manager-contract');
+            const RevenueTokenManagerContract = require('../../contracts/revenue-token-manager-contract');
             const revenueTokenManager = new RevenueTokenManagerContract(wallet);
 
             let niiBalance = await niiContract.balanceOf(config.wallet.address);

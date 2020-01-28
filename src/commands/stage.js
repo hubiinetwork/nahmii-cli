@@ -78,7 +78,7 @@ module.exports = {
                 spinner.start(`Waiting for transaction ${tx.hash} to be mined`);
 
                 const txReceipt = await provider.getTransactionConfirmation(tx.hash, 300);
-                spinner.succeed(`Updated stage balance(max withdrawal amount). [used gas: ${ethers.utils.bigNumberify(txReceipt.gasUsed).toString()}]`);
+                spinner.succeed(`Updated stage balance (max withdrawal amount). [used gas: ${ethers.utils.bigNumberify(txReceipt.gasUsed).toString()}]`);
             }
         }
         catch (err) {
