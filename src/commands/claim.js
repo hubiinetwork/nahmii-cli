@@ -2,7 +2,7 @@
 
 module.exports = {
     command: 'claim <nii|fees>',
-    describe: 'Display information about specified resource',
+    describe: 'Claim specified resource',
     builder: yargs => {
         return yargs
             .commandDir('./claim-commands', {exclude: /.*.spec.js$/})
