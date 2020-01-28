@@ -193,7 +193,7 @@ describe('Claim fees command', () => {
 
                 expect(stubbedProviderInstance.getTransactionConfirmation).to.have.been.calledOnce;
                 expect(stubbedProviderInstance.getTransactionConfirmation).to.have.been.calledWith('withdraw fees tx hash');
-                expect(stubbedOra.succeed).to.have.been.calledWith('Claim skipped');
+                expect(stubbedOra.succeed).to.have.been.calledWith('Nothing to claim');
             });
         });
 
@@ -243,8 +243,8 @@ describe('Claim fees command', () => {
                 await cmd.handler(Object.assign(cmdOpts, {blocks: '1234'}));
 
                 expect(stubbedProviderInstance.getTransactionConfirmation).to.not.have.been.called;
-                expect(stubbedOra.succeed).to.have.been.calledWith('Claim skipped');
-                expect(stubbedOra.succeed).to.have.been.calledWith('Withdrawal skipped');
+                expect(stubbedOra.succeed).to.have.been.calledWith('Nothing to claim');
+                expect(stubbedOra.succeed).to.have.been.calledWith('Nothing to withdraw');
             });
         });
     });
@@ -355,8 +355,8 @@ describe('Claim fees command', () => {
                 await cmd.handler(Object.assign(cmdOpts, {blocks: '1234-5678'}));
 
                 expect(stubbedProviderInstance.getTransactionConfirmation).to.not.have.been.called;
-                expect(stubbedOra.succeed).to.have.been.calledWith('Claim skipped');
-                expect(stubbedOra.succeed).to.have.been.calledWith('Withdrawal skipped');
+                expect(stubbedOra.succeed).to.have.been.calledWith('Nothing to claim');
+                expect(stubbedOra.succeed).to.have.been.calledWith('Nothing to withdraw');
             });
         });
     });
@@ -467,8 +467,8 @@ describe('Claim fees command', () => {
                 await cmd.handler(Object.assign(cmdOpts, {accruals: '1'}));
 
                 expect(stubbedProviderInstance.getTransactionConfirmation).to.not.have.been.called;
-                expect(stubbedOra.succeed).to.have.been.calledWith('Claim skipped');
-                expect(stubbedOra.succeed).to.have.been.calledWith('Withdrawal skipped');
+                expect(stubbedOra.succeed).to.have.been.calledWith('Nothing to claim');
+                expect(stubbedOra.succeed).to.have.been.calledWith('Nothing to withdraw');
             });
         });
     });
@@ -579,8 +579,8 @@ describe('Claim fees command', () => {
                 await cmd.handler(Object.assign(cmdOpts, {accruals: '1-2'}));
 
                 expect(stubbedProviderInstance.getTransactionConfirmation).to.not.have.been.called;
-                expect(stubbedOra.succeed).to.have.been.calledWith('Claim skipped');
-                expect(stubbedOra.succeed).to.have.been.calledWith('Withdrawal skipped');
+                expect(stubbedOra.succeed).to.have.been.calledWith('Nothing to claim');
+                expect(stubbedOra.succeed).to.have.been.calledWith('Nothing to withdraw');
             });
         });
     });

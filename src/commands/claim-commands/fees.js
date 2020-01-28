@@ -88,12 +88,14 @@ module.exports = {
             const currency = nahmii.Currency.from({ct: tokenInfo.currency, id: 0});
 
             spinner.start('Obtaining claimable amount');
-            const claimableAmount = await range.claimableFeesFn.call(claimant, wallet, currency, range.start, range.end);
+            const [claimableAmount, stagedAmount] = await Promise.all([
+                range.claimableFeesFn.call(claimant, wallet, currency, range.start, range.end),
+                claimant.withdrawableFees(wallet, currency)
+            ]);
             spinner.succeed(`Claimable amount of ${tokenInfo.symbol} is ${ethers.utils.formatUnits(claimableAmount, tokenInfo.decimals)}`);
 
-            spinner.start('Obtaining previously claimed (and not withdrawn) amount');
-            const stagedAmount = await claimant.withdrawableFees(wallet, currency);
-            spinner.succeed(`Previously claimed (and not withdrawn) amount of ${tokenInfo.symbol} is ${ethers.utils.formatUnits(stagedAmount, tokenInfo.decimals)}`);
+            if (stagedAmount.gt(0))
+                spinner.succeed(`Previously claimed (and not withdrawn) amount of ${tokenInfo.symbol} is ${ethers.utils.formatUnits(stagedAmount, tokenInfo.decimals)}`);
 
             if (claimableAmount.gt(0)) {
                 spinner.start(`Claiming ${ethers.utils.formatUnits(claimableAmount, tokenInfo.decimals)} ${tokenInfo.symbol}`);
@@ -103,10 +105,12 @@ module.exports = {
                 spinner.succeed(`Claim of ${ethers.utils.formatUnits(claimableAmount, tokenInfo.decimals)} ${tokenInfo.symbol} confirmed`);
             }
             else {
-                spinner.succeed('Claim skipped');
+                spinner.succeed('Nothing to claim');
             }
 
+            spinner.start('Obtaining withdrawable amount');
             const withdrawableAmount = await claimant.withdrawableFees(wallet, currency);
+            spinner.succeed(`Withdrawable amount of ${tokenInfo.symbol} is ${ethers.utils.formatUnits(withdrawableAmount, tokenInfo.decimals)}`);
 
             if (withdrawableAmount.gt(0)) {
                 spinner.start(`Withdrawing ${ethers.utils.formatUnits(withdrawableAmount, tokenInfo.decimals)} ${tokenInfo.symbol}`);
@@ -117,7 +121,7 @@ module.exports = {
                 spinner.succeed(`Withdrawal of ${ethers.utils.formatUnits(withdrawableAmount, tokenInfo.decimals)} ${tokenInfo.symbol} confirmed`);
             }
             else {
-                spinner.succeed('Withdrawal skipped');
+                spinner.succeed('Nothing to withdraw');
             }
         }
         catch (err) {
