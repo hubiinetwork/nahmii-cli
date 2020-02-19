@@ -1,0 +1,19 @@
+plugins:
+  fixme:
+    enabled: true
+  nodesecurity:
+    enabled: true
+checks:
+  similar-code:
+    enabled: false
+  method-count:
+    enabled: false
+exclude_patterns:
+- "coverage/"
+- "node_modules/"
+- "peer_modules/"
+- "**/spec/"
+- "**/test/"
+- "**/tests/"
+- "**/*.d.ts"
+- "**/*.spec.js"
