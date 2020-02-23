@@ -35,6 +35,9 @@ module.exports = {
             const tokenInfo = await provider.getTokenInfo(argv.currency);
             
             const amount = utils.parseAmount(argv.amount, tokenInfo.decimals);
+            if (amount.eq(0))
+                throw new Error('Amount must be greater than zero!');
+
             const gasLimit = utils.parsePositiveInteger(argv.gas);
             const gasPriceInGwei = utils.parsePositiveInteger(argv.price);
             const gasPrice = ethers.utils.bigNumberify(gasPriceInGwei).mul(ethers.utils.bigNumberify(10).pow(9));

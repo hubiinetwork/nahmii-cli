@@ -13,9 +13,6 @@ function parseAmount(amount, decimals) {
         throw new TypeError('Amount must be a number!');
     }
 
-    if (amountBN.eq(0))
-        throw new Error('Amount must be greater than zero!');
-
     return amountBN;
 }
 
