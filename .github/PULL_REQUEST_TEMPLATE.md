@@ -13,5 +13,5 @@ _Please check if your PR fulfills the following requirements:_
 - [ ] Package version number has been updated according to semantic rules
 - [ ] Tests for the changes have been added and all test pass (`npm test`)
 - [ ] Test coverage requirements have been met or improved (`.nycrc`)
-- [ ] Eslint has been run and reported issues have been fixed (`npm run eslint`)
+- [ ] Eslint has been run and reported issues have been fixed (`npm run lint`)
 - [ ] Codeclimate has been run and reported issues have been fixed (`npm run codeclimate`)
