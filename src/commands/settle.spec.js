@@ -353,4 +353,21 @@ describe('settle command', () => {
                 });
         });
     });
+
+    context('settle -1 ETH', () => {
+        it('yields an error', (done) => {
+            settleCmd.handler
+                .call(undefined, {
+                    amount: '-1',
+                    currency: 'ETH',
+                    gas: 2,
+                    price: 2
+                })
+                .catch(err => {
+                    expect(err.message).to.match(/amount.*greater than zero/i);
+                    done();
+                });
+        });
+    });
+
 });

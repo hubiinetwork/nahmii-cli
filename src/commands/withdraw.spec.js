@@ -199,7 +199,22 @@ describe('Withdraw command', () => {
                     gas: 2
                 })
                 .catch(err => {
-                    expect(err.message).to.match(/amount.*zero/i);
+                    expect(err.message).to.match(/amount.*strictly greater than zero/i);
+                    done();
+                });
+        });
+    });
+
+    context('withdraw -1 ETH', () => {
+        it('yields an error', (done) => {
+            withdrawCmd.handler
+                .call(undefined, {
+                    amount: '0',
+                    currency: 'ETH',
+                    gas: 2
+                })
+                .catch(err => {
+                    expect(err.message).to.match(/amount.*strictly greater than zero/i);
                     done();
                 });
         });

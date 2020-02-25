@@ -34,8 +34,8 @@ module.exports = {
             provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
             const tokenInfo = await provider.getTokenInfo(argv.currency);
             const amount = utils.parseAmount(argv.amount, tokenInfo.decimals);
-            if (amount.eq(0))
-                throw new Error('Amount must be greater than zero!');
+            if (!amount.gt(0))
+                throw new Error('Amount must be strictly greater than zero!');
 
             const gasLimit = utils.parsePositiveInteger(argv.gas);
             const gasPriceInGwei = utils.parsePositiveInteger(argv.price);
