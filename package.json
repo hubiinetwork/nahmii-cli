@@ -1,10 +1,11 @@
 {
   "name": "nahmii-cli",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "CLI interface for using the nahmii by hubii protocol",
   "main": "index.js",
   "scripts": {
-    "test": "nyc mocha \"src/**/*.spec.js\"",
+    "test": "nyc --all mocha \"src/**/*.spec.js\"",
+    "acceptance:test": "mocha --timeout 999999 \"tests/**/*.spec.js\"",
     "test:watch": "npm run test -- --watch",
     "lint": "eslint --ignore-path .gitignore .",
     "lint:fix": "npm run lint -- --fix",

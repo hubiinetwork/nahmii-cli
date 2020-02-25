@@ -11,7 +11,8 @@ _A list of issues addressed in this pull request. Consider to create a new issue
 _Please check if your PR fulfills the following requirements:_
 - [ ] Associated issue has been created and referenced above
 - [ ] Package version number has been updated according to semantic rules
-- [ ] Tests for the changes have been added and all test pass (`npm test`)
+- [ ] Added unit tests for the changes and all tests pass (`npm test`)
+- [ ] Added acceptance tests for new features and all tests pass (`npm run acceptance:test`)
 - [ ] Test coverage requirements have been met or improved (`.nycrc`)
-- [ ] Eslint has been run and reported issues have been fixed (`npm run eslint`)
+- [ ] Eslint has been run and reported issues have been fixed (`npm run lint`)
 - [ ] Codeclimate has been run and reported issues have been fixed (`npm run codeclimate`)
