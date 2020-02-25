@@ -200,7 +200,23 @@ describe('Unstage command', () => {
                     gas: 2
                 })
                 .catch(err => {
-                    expect(err.message).to.match(/amount.*zero/i);
+                    expect(err.message).to.match(/amount.*strictly greater than zero/i);
+                    done();
+                });
+        });
+
+    });
+
+    context('unstage -1 ETH', () => {
+        it('yields an error', (done) => {
+            unstageCmd.handler
+                .call(undefined, {
+                    amount: '-1',
+                    currency: 'ETH',
+                    gas: 2
+                })
+                .catch(err => {
+                    expect(err.message).to.match(/amount.*strictly greater than zero/i);
                     done();
                 });
         });

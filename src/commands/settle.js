@@ -12,7 +12,7 @@ module.exports = {
     builder: yargs => {
         yargs.example('settle 1 ETH', 'Start settlement(s) for 1 Ether using default gas limit and price.');
         yargs.example('settle 1 ETH --gas=500000', 'Start settlement(s) for 1 Ether and sets gas limit to 500000 while using default gas price.');
-        yargs.example('settle 1 ETH --price=2', 'Start settlement(s) for 1 Ether and sets gas price to 2 Gwei while using default gas limit.');
+        yargs.example('settle 0 ETH --price=2', 'Start settlement(s) for 0 Ether and sets gas price to 2 Gwei while using default gas limit.');
         yargs.example('settle 1000 HBT', 'Start settlement(s) for 1000 Hubiits (HBT) using default gas limit and price.');
         yargs.option('gas', {
             desc: 'Gas limit used _per transaction_. Settles can be 1 or more transactions depending on the stage amount.',
@@ -36,6 +36,9 @@ module.exports = {
             provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
             const tokenInfo = await provider.getTokenInfo(currency);
             const amount = utils.parseAmount(argv.amount, tokenInfo.decimals);
+            if (!amount.gte(0))
+                throw new Error('Amount must be greater than zero!');
+
             const gasLimit = utils.parsePositiveInteger(argv.gas);
             const gasPriceInGwei = utils.parsePositiveInteger(argv.price);
             const gasPrice = ethers.utils.bigNumberify(gasPriceInGwei).mul(ethers.utils.bigNumberify(10).pow(9));

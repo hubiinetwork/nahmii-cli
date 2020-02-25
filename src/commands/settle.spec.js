@@ -196,6 +196,52 @@ describe('settle command', () => {
         });
     });
 
+    context('settle 0 ETH', () => {
+        beforeEach(() => {
+            requiredSettlements = [
+                {
+                    type: 'payment',
+                    stageAmount: ethers.utils.parseUnits('1.0', 18),
+                    currency,
+                    start: sinon.stub().resolves(txRequest1),
+                    stage: sinon.stub()
+                },
+                {
+                    type: 'onchain-balance',
+                    stageAmount: ethers.utils.parseUnits('0.1', 18),
+                    currency,
+                    start: sinon.stub().resolves(txRequest2),
+                    stage: sinon.stub()
+                }
+            ];
+            stubbedSettlementFactory.getAllSettlements.resolves([]);
+            stubbedSettlementFactory.calculateRequiredSettlements.resolves(requiredSettlements);
+            return settleCmd.handler.call(undefined, {
+                amount: '0',
+                currency: 'ETH',
+                gas: 2,
+                price: 2
+            });
+        });
+
+        it('starts required settlements', () => {
+            for(const requiredSettlement of requiredSettlements) {
+                expect(requiredSettlement.start).to.have.been.calledWith(
+                    stubbedWallet,
+                    {
+                        gasLimit: 2,
+                        gasPrice: ethers.utils.bigNumberify(2000000000)
+                    }
+                );
+            }
+        });
+
+        it('stops token refresh/spinner', () => {
+            expect(stubbedOra.stop).to.have.been.called;
+            expect(stubbedProviderInstance.stopUpdate).to.have.been.called;
+        });
+    });
+
     context('no valid settlements to start with', () => {
         beforeEach(async () => {
             stubbedSettlementFactory.getAllSettlements.resolves([]);
@@ -308,19 +354,20 @@ describe('settle command', () => {
         });
     });
 
-    context('settle 0 ETH', () => {
+    context('settle -1 ETH', () => {
         it('yields an error', (done) => {
             settleCmd.handler
                 .call(undefined, {
-                    amount: '0',
+                    amount: '-1',
                     currency: 'ETH',
                     gas: 2,
                     price: 2
                 })
                 .catch(err => {
-                    expect(err.message).to.match(/amount.*zero/i);
+                    expect(err.message).to.match(/amount.*greater than zero/i);
                     done();
                 });
         });
     });
+
 });
