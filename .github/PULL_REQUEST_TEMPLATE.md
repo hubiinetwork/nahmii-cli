@@ -1,14 +1,14 @@
 ### Purpose
-_Enter a description of why this PR is necessary._
+<!-- Enter a description of why this PR is necessary. -->
 
 ### Changes
-_A list of changes that are maid to achieve the purpose._
+<!-- A list of changes that are maid to achieve the purpose.  -->
 
 ### Issues
-_A list of issues addressed in this pull request. Consider to create a new issue if no relevant issue already exists._
+<!-- A list of issues addressed in this pull request. Consider to create a new issue if no relevant issue already exists.  -->
 
 ### Checklist
-_Please check if your PR fulfills the following requirements:_
+_Please check if your PR fulfils the following requirements:_
 - [ ] Associated issue has been created and referenced above
 - [ ] Package version number has been updated according to semantic rules
 - [ ] Added unit tests for the changes and all tests pass (`npm test`)
