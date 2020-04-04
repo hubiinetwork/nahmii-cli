@@ -9,11 +9,11 @@ const blockSymbol = Symbol.for('block');
 const accrualSymbol = Symbol.for('accrual');
 
 module.exports = {
-    command: 'fees for <currency> [--accruals=<startIndex>-<endIndex>] [--blocks=<startBlock>-<endBlock>] [--gas=<gaslimit>] [--price=<gasPrice in gwei>] [--timeout=<seconds>]',
-    describe: 'Claims fees for <currency> either from inclusive range of accrual indices <startIndex> through <endIndex> or from inclusive range of block numbers <startBlock> through <endBlock>',
+    command: 'fees for <currency> [--accruals=<startIndex>-<endIndex>] [--gas=<gaslimit>] [--price=<gasPrice in gwei>] [--timeout=<seconds>]',
+    describe: 'Claims fees for <currency>',
     builder: yargs => {
-        yargs.example('claim fees for NII --blocks=8900000-8900100', 'Claims fees for NII tokens for blocks 8900000 through 8900100.');
-        yargs.example('claim fees for ETH --accruals=3 --price=32', 'Claims fees for ETH for accrual index 3 paying 32 Gwei as gas price.');
+        yargs.example('claim fees for NII --accruals=0-2', 'Claims fees for NII tokens for accrual indices 0 through 2.');
+        yargs.example('claim fees for ETH --accrual=3 --price=32', 'Claims fees for ETH for accrual index 3 paying 32 Gwei as gas price.');
         yargs.option('accruals', {
             desc: 'Single accrual index or range of accrual indices',
             alias: 'accrual',
@@ -22,7 +22,8 @@ module.exports = {
         yargs.option('blocks', {
             desc: 'Single block number or range of block numbers',
             alias: 'block',
-            type: 'string'
+            type: 'string',
+            hidden: true
         });
         yargs.option('gas', {
             desc: 'Gas limit used _per on-chain transaction_.',
@@ -39,6 +40,7 @@ module.exports = {
             default: 60,
             type: 'number'
         });
+        yargs.showHidden(true);
         yargs.conflicts('accruals', 'blocks');
     },
     handler: async (argv) => {
