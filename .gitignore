@@ -62,4 +62,5 @@ typings/
 
 # IDEs
 .idea
+*.iml
 .vscode
