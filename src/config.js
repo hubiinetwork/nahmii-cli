@@ -36,4 +36,9 @@ cfg.privateKey = async (secret) => {
     return wallet.privateKey;
 };
 
+cfg.tokenHolderRevenueFundAbstractions = {
+    'ropsten': ['TokenHolderRevenueFund-0-7579770', 'TokenHolderRevenueFund'],
+    'homestead': ['TokenHolderRevenueFund']
+};
+
 module.exports = cfg;
