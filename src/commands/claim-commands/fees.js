@@ -9,7 +9,7 @@ const blockSymbol = Symbol.for('block');
 const accrualSymbol = Symbol.for('accrual');
 
 module.exports = {
-    command: 'fees for <currency> [--accruals=<startIndex>-<endIndex>] [--gas=<gaslimit>] [--price=<gasPrice in gwei>] [--timeout=<seconds>]',
+    command: 'fees for <currency> [--accruals=<firstIndex>-<lastIndex>] [--gas=<gaslimit>] [--price=<gasPrice in gwei>] [--timeout=<seconds>]',
     describe: 'Claims fees for <currency>',
     builder: yargs => {
         yargs.example('claim fees for NII --accruals=0-2', 'Claims fees for NII tokens for accrual indices 0 through 2.');
@@ -46,19 +46,19 @@ module.exports = {
     handler: async (argv) => {
         let range;
         if (argv.blocks) {
-            const [startBlock, endBlock] = argv.blocks.split('-');
+            const [firstBlock, lastBlock] = argv.blocks.split('-');
             range = {
                 type: blockSymbol,
-                start: validateBlock(startBlock, 'Start'),
-                end: validateBlock(endBlock || startBlock, 'End')
+                first: validateBlock(firstBlock, 'First'),
+                last: validateBlock(lastBlock || firstBlock, 'Last')
             };
         }
         else if (argv.accruals) {
-            const [startAccrualIndex, endAccrualIndex] = argv.accruals.split('-');
+            const [firstAccrualIndex, lastAccrualIndex] = argv.accruals.split('-');
             range = {
                 type: accrualSymbol,
-                start: validateAccrual(startAccrualIndex, 'Start'),
-                end: validateAccrual(endAccrualIndex || startAccrualIndex, 'End')
+                first: validateAccrual(firstAccrualIndex, 'First'),
+                last: validateAccrual(lastAccrualIndex || firstAccrualIndex, 'Last')
             };
         }
 
@@ -73,7 +73,9 @@ module.exports = {
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
         const privateKey = await config.privateKey(config.wallet.secret);
         const wallet = new nahmii.Wallet(privateKey, provider);
-        const claimant = new nahmii.FeesClaimant(provider);
+
+        const network = await provider.getNetwork();
+        const claimant = new nahmii.FeesClaimant(provider, config.tokenHolderRevenueFundAbstractions[network.name]);
 
         const spinner = ora();
         try {
@@ -91,7 +93,7 @@ module.exports = {
 
             spinner.start('Obtaining claimable amount');
             const [claimableAmount, stagedAmount] = await Promise.all([
-                range.claimableFeesFn.call(claimant, wallet, currency, range.start, range.end),
+                range.claimableFeesFn.call(claimant, wallet, currency, range.first, range.last),
                 claimant.withdrawableFees(wallet, currency)
             ]);
             spinner.succeed(`Claimable amount of ${tokenInfo.symbol} is ${ethers.utils.formatUnits(claimableAmount, tokenInfo.decimals)}`);
@@ -101,7 +103,7 @@ module.exports = {
 
             if (claimableAmount.gt(0)) {
                 spinner.start(`Claiming ${ethers.utils.formatUnits(claimableAmount, tokenInfo.decimals)} ${tokenInfo.symbol}`);
-                const claimAndStageTx = await range.claimFeesFn.call(claimant, wallet, currency, range.start, range.end, options);
+                const claimAndStageTx = await range.claimFeesFn.call(claimant, wallet, currency, range.first, range.last, options);
 
                 await provider.getTransactionConfirmation(claimAndStageTx.hash, timeout);
                 spinner.succeed(`Claim of ${ethers.utils.formatUnits(claimableAmount, tokenInfo.decimals)} ${tokenInfo.symbol} confirmed`);
