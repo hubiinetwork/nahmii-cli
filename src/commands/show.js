@@ -1,7 +1,7 @@
 'use strict';
 
 module.exports = {
-    command: 'show <balance|payments|receipts|tokens|claimable amount>',
+    command: 'show <balance|payments|receipts|tokens|claimable fees>',
     describe: 'Display information about specified resource',
     builder: yargs => {
         return yargs

@@ -8,10 +8,10 @@ const accrualSymbol = Symbol.for('accrual');
 
 module.exports = {
     command: 'claimable fees for <currency> [--accruals=<firstIndex>-<lastIndex>]',
-    describe: 'Show my claimable amount for <currency>',
+    describe: 'Show my claimable fees for <currency>',
     builder: yargs => {
-        yargs.example('claim fees for NII --accruals=0-2', 'Claims fees for NII tokens for accrual indices 0 through 2.');
-        yargs.example('claim fees for ETH --accrual=3 --price=32', 'Claims fees for ETH for accrual index 3 paying 32 Gwei as gas price.');
+        yargs.example('claimable fees for NII --accruals=0-2', 'Show claimable fees for NII tokens for accrual indices 0 through 2.');
+        yargs.example('claimable fees for ETH --accrual=3', 'Show claimable fees for ETH for accrual index 3.');
         yargs.option('accruals', {
             desc: 'Single accrual index or range of accrual indices',
             alias: 'accrual',
