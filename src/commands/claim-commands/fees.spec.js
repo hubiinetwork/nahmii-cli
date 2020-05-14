@@ -21,13 +21,15 @@ const stubbedProviderInstance = {
     getApiAccessToken: sinon.stub(),
     stopUpdate: sinon.stub(),
     getTransactionConfirmation: sinon.stub(),
-    getTokenInfo: sinon.stub()
+    getTokenInfo: sinon.stub(),
+    getNetwork: sinon.stub()
 };
 stubbedProviderInstance.reset = function () {
     this.getBlockNumber.reset();
     this.getApiAccessToken.reset();
     this.stopUpdate.reset();
     this.getTransactionConfirmation.reset();
+    this.getNetwork.reset();
 }.bind(stubbedProviderInstance);
 
 const stubbedWallet = {
@@ -58,7 +60,10 @@ const stubbedConfig = {
     privateKey: sinon.stub(),
     apiRoot: 'some-api-root',
     appId: 'an-app-id',
-    appSecret: 'much secret!'
+    appSecret: 'much secret!',
+    tokenHolderRevenueFundAbstractions: {
+        'test-network': ['TokenHolderRevenueFund']
+    }
 };
 
 const stubbedTokenInfo = {
@@ -119,6 +124,8 @@ describe('Claim fees command', () => {
         stubbedProviderInstance.getTokenInfo
             .withArgs(currencyAsSymbol)
             .resolves(stubbedTokenInfo);
+        stubbedProviderInstance.getNetwork
+            .returns({name: 'test-network'});
         stubbedConfig.privateKey
             .withArgs(stubbedConfig.wallet.secret)
             .resolves('privatekey');
@@ -146,16 +153,16 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 1234)
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedFeesClaimant.claimFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 1234)
                     .resolves({hash: 'claim fees tx hash'});
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
                     .onFirstCall()
-                    .resolves(ethers.utils.bigNumberify(2000))
+                    .resolves('2000.0')
                     .onSecondCall()
-                    .resolves(ethers.utils.bigNumberify(3000));
+                    .resolves('3000.0');
                 stubbedMonetaryAmount.amount = 3000;
                 stubbedFeesClaimant.withdrawFees
                     .withArgs(stubbedWallet, stubbedMonetaryAmount)
@@ -175,13 +182,13 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 1234)
-                    .resolves(ethers.utils.bigNumberify(0));
+                    .resolves('0.0');
                 stubbedFeesClaimant.claimFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 1234)
                     .resolves({hash: 'claim fees tx hash'});
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedMonetaryAmount.amount = 1000;
                 stubbedFeesClaimant.withdrawFees
                     .withArgs(stubbedWallet, stubbedMonetaryAmount)
@@ -201,16 +208,16 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 1234)
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedFeesClaimant.claimFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 1234)
                     .resolves({hash: 'claim fees tx hash'});
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
                     .onFirstCall()
-                    .resolves(ethers.utils.bigNumberify(0))
+                    .resolves('0.0')
                     .onSecondCall()
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedMonetaryAmount.amount = 1000;
                 stubbedFeesClaimant.withdrawFees
                     .withArgs(stubbedWallet, stubbedMonetaryAmount)
@@ -230,13 +237,13 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 1234)
-                    .resolves(ethers.utils.bigNumberify(0));
+                    .resolves('0.0');
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
                     .onFirstCall()
-                    .resolves(ethers.utils.bigNumberify(0))
+                    .resolves('0.0')
                     .onSecondCall()
-                    .resolves(ethers.utils.bigNumberify(0));
+                    .resolves('0.0');
             });
 
             it('should claim fees for the given block number', async () => {
@@ -259,16 +266,16 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 5678)
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedFeesClaimant.claimFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 5678)
                     .resolves({hash: 'claim fees tx hash'});
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
                     .onFirstCall()
-                    .resolves(ethers.utils.bigNumberify(2000))
+                    .resolves('2000.0')
                     .onSecondCall()
-                    .resolves(ethers.utils.bigNumberify(3000));
+                    .resolves('3000.0');
                 stubbedMonetaryAmount.amount = 3000;
                 stubbedFeesClaimant.withdrawFees
                     .withArgs(stubbedWallet, stubbedMonetaryAmount)
@@ -288,13 +295,13 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 5678)
-                    .resolves(ethers.utils.bigNumberify(0));
+                    .resolves('0.0');
                 stubbedFeesClaimant.claimFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 5678)
                     .resolves({hash: 'claim fees tx hash'});
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedMonetaryAmount.amount = 1000;
                 stubbedFeesClaimant.withdrawFees
                     .withArgs(stubbedWallet, stubbedMonetaryAmount)
@@ -313,16 +320,16 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 5678)
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedFeesClaimant.claimFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 5678)
                     .resolves({hash: 'claim fees tx hash'});
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
                     .onFirstCall()
-                    .resolves(ethers.utils.bigNumberify(0))
+                    .resolves('0.0')
                     .onSecondCall()
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedMonetaryAmount.amount = 1000;
                 stubbedFeesClaimant.withdrawFees
                     .withArgs(stubbedWallet, stubbedMonetaryAmount)
@@ -342,13 +349,13 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 5678)
-                    .resolves(ethers.utils.bigNumberify(0));
+                    .resolves('0.0');
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
                     .onFirstCall()
-                    .resolves(ethers.utils.bigNumberify(0))
+                    .resolves('0.0')
                     .onSecondCall()
-                    .resolves(ethers.utils.bigNumberify(0));
+                    .resolves('0.0');
             });
 
             it('should claim fees for the given block number', async () => {
@@ -371,16 +378,16 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForAccruals
                     .withArgs(stubbedWallet, stubbedCurrency, 1, 1)
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedFeesClaimant.claimFeesForAccruals
                     .withArgs(stubbedWallet, stubbedCurrency, 1, 1)
                     .resolves({hash: 'claim fees tx hash'});
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
                     .onFirstCall()
-                    .resolves(ethers.utils.bigNumberify(2000))
+                    .resolves('2000.0')
                     .onSecondCall()
-                    .resolves(ethers.utils.bigNumberify(3000));
+                    .resolves('3000.0');
                 stubbedMonetaryAmount.amount = 3000;
                 stubbedFeesClaimant.withdrawFees
                     .withArgs(stubbedWallet, stubbedMonetaryAmount)
@@ -400,13 +407,13 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForAccruals
                     .withArgs(stubbedWallet, stubbedCurrency, 1, 1)
-                    .resolves(ethers.utils.bigNumberify(0));
+                    .resolves('0.0');
                 stubbedFeesClaimant.claimFeesForAccruals
                     .withArgs(stubbedWallet, stubbedCurrency, 1, 1)
                     .resolves({hash: 'claim fees tx hash'});
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedMonetaryAmount.amount = 1000;
                 stubbedFeesClaimant.withdrawFees
                     .withArgs(stubbedWallet, stubbedMonetaryAmount)
@@ -425,16 +432,16 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForAccruals
                     .withArgs(stubbedWallet, stubbedCurrency, 1, 1)
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedFeesClaimant.claimFeesForAccruals
                     .withArgs(stubbedWallet, stubbedCurrency, 1, 1)
                     .resolves({hash: 'claim fees tx hash'});
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
                     .onFirstCall()
-                    .resolves(ethers.utils.bigNumberify(0))
+                    .resolves('0.0')
                     .onSecondCall()
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedMonetaryAmount.amount = 1000;
                 stubbedFeesClaimant.withdrawFees
                     .withArgs(stubbedWallet, stubbedMonetaryAmount)
@@ -454,13 +461,13 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForAccruals
                     .withArgs(stubbedWallet, stubbedCurrency, 1, 1)
-                    .resolves(ethers.utils.bigNumberify(0));
+                    .resolves('0.0');
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
                     .onFirstCall()
-                    .resolves(ethers.utils.bigNumberify(0))
+                    .resolves('0.0')
                     .onSecondCall()
-                    .resolves(ethers.utils.bigNumberify(0));
+                    .resolves('0.0');
             });
 
             it('should claim fees for the given block number', async () => {
@@ -483,16 +490,16 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForAccruals
                     .withArgs(stubbedWallet, stubbedCurrency, 1, 2)
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedFeesClaimant.claimFeesForAccruals
                     .withArgs(stubbedWallet, stubbedCurrency, 1, 2)
                     .resolves({hash: 'claim fees tx hash'});
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
                     .onFirstCall()
-                    .resolves(ethers.utils.bigNumberify(2000))
+                    .resolves('2000.0')
                     .onSecondCall()
-                    .resolves(ethers.utils.bigNumberify(3000));
+                    .resolves('3000.0');
                 stubbedMonetaryAmount.amount = 3000;
                 stubbedFeesClaimant.withdrawFees
                     .withArgs(stubbedWallet, stubbedMonetaryAmount)
@@ -512,13 +519,13 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForAccruals
                     .withArgs(stubbedWallet, stubbedCurrency, 1, 2)
-                    .resolves(ethers.utils.bigNumberify(0));
+                    .resolves('0.0');
                 stubbedFeesClaimant.claimFeesForAccruals
                     .withArgs(stubbedWallet, stubbedCurrency, 1, 2)
                     .resolves({hash: 'claim fees tx hash'});
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedMonetaryAmount.amount = 1000;
                 stubbedFeesClaimant.withdrawFees
                     .withArgs(stubbedWallet, stubbedMonetaryAmount)
@@ -537,16 +544,16 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForAccruals
                     .withArgs(stubbedWallet, stubbedCurrency, 1, 2)
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedFeesClaimant.claimFeesForAccruals
                     .withArgs(stubbedWallet, stubbedCurrency, 1, 2)
                     .resolves({hash: 'claim fees tx hash'});
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
                     .onFirstCall()
-                    .resolves(ethers.utils.bigNumberify(0))
+                    .resolves('0.0')
                     .onSecondCall()
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedMonetaryAmount.amount = 1000;
                 stubbedFeesClaimant.withdrawFees
                     .withArgs(stubbedWallet, stubbedMonetaryAmount)
@@ -566,13 +573,13 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForAccruals
                     .withArgs(stubbedWallet, stubbedCurrency, 1, 2)
-                    .resolves(ethers.utils.bigNumberify(0));
+                    .resolves('0.0');
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
                     .onFirstCall()
-                    .resolves(ethers.utils.bigNumberify(0))
+                    .resolves('0.0')
                     .onSecondCall()
-                    .resolves(ethers.utils.bigNumberify(0));
+                    .resolves('0.0');
             });
 
             it('should claim fees for the given block number', async () => {
@@ -650,16 +657,16 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 1234)
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedFeesClaimant.claimFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 1234)
                     .rejects(new Error('Unable mine the claiming of fees'));
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
                     .onFirstCall()
-                    .resolves(ethers.utils.bigNumberify(2000))
+                    .resolves('2000.0')
                     .onSecondCall()
-                    .resolves(ethers.utils.bigNumberify(3000));
+                    .resolves('3000.0');
                 stubbedMonetaryAmount.amount = 3000;
                 stubbedFeesClaimant.withdrawFees
                     .withArgs(stubbedWallet, stubbedMonetaryAmount)
@@ -676,16 +683,16 @@ describe('Claim fees command', () => {
             beforeEach(() => {
                 stubbedFeesClaimant.claimableFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 1234)
-                    .resolves(ethers.utils.bigNumberify(1000));
+                    .resolves('1000.0');
                 stubbedFeesClaimant.claimFeesForBlocks
                     .withArgs(stubbedWallet, stubbedCurrency, 1234, 1234)
                     .resolves({hash: 'claim fees tx hash'});
                 stubbedFeesClaimant.withdrawableFees
                     .withArgs(stubbedWallet, stubbedCurrency)
                     .onFirstCall()
-                    .resolves(ethers.utils.bigNumberify(2000))
+                    .resolves('2000.0')
                     .onSecondCall()
-                    .resolves(ethers.utils.bigNumberify(3000));
+                    .resolves('3000.0');
                 stubbedMonetaryAmount.amount = 3000;
                 stubbedFeesClaimant.withdrawFees
                     .withArgs(stubbedWallet, stubbedMonetaryAmount)

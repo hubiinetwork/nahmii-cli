@@ -2,14 +2,14 @@
 
 const dbg = require('../../dbg');
 const nahmii = require('nahmii-sdk');
-const ethers = require('ethers');
+const {ethers: {utils: {parseUnits}}} = require('ethers');
 const ora = require('ora');
 
 const blockSymbol = Symbol.for('block');
 const accrualSymbol = Symbol.for('accrual');
 
 module.exports = {
-    command: 'fees for <currency> [--accruals=<startIndex>-<endIndex>] [--gas=<gaslimit>] [--price=<gasPrice in gwei>] [--timeout=<seconds>]',
+    command: 'fees for <currency> [--accruals=<firstIndex>-<lastIndex>] [--gas=<gaslimit>] [--price=<gasPrice in gwei>] [--timeout=<seconds>]',
     describe: 'Claims fees for <currency>',
     builder: yargs => {
         yargs.example('claim fees for NII --accruals=0-2', 'Claims fees for NII tokens for accrual indices 0 through 2.');
@@ -46,19 +46,19 @@ module.exports = {
     handler: async (argv) => {
         let range;
         if (argv.blocks) {
-            const [startBlock, endBlock] = argv.blocks.split('-');
+            const [firstBlock, lastBlock] = argv.blocks.split('-');
             range = {
                 type: blockSymbol,
-                start: validateBlock(startBlock, 'Start'),
-                end: validateBlock(endBlock || startBlock, 'End')
+                first: validateBlock(firstBlock, 'First'),
+                last: validateBlock(lastBlock || firstBlock, 'Last')
             };
         }
         else if (argv.accruals) {
-            const [startAccrualIndex, endAccrualIndex] = argv.accruals.split('-');
+            const [firstAccrualIndex, lastAccrualIndex] = argv.accruals.split('-');
             range = {
                 type: accrualSymbol,
-                start: validateAccrual(startAccrualIndex, 'Start'),
-                end: validateAccrual(endAccrualIndex || startAccrualIndex, 'End')
+                first: validateAccrual(firstAccrualIndex, 'First'),
+                last: validateAccrual(lastAccrualIndex || firstAccrualIndex, 'Last')
             };
         }
 
@@ -66,14 +66,16 @@ module.exports = {
         const timeout = validateTimeout(argv.timeout);
         const gasPriceGWEI = validateGasPrice(argv.price);
 
-        const gasPrice = ethers.utils.parseUnits(gasPriceGWEI.toString(), 'gwei');
+        const gasPrice = parseUnits(gasPriceGWEI.toString(), 'gwei');
         const options = {gasLimit, gasPrice};
 
         const config = require('../../config');
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
         const privateKey = await config.privateKey(config.wallet.secret);
         const wallet = new nahmii.Wallet(privateKey, provider);
-        const claimant = new nahmii.FeesClaimant(provider);
+
+        const network = await provider.getNetwork();
+        const claimant = new nahmii.FeesClaimant(provider, config.tokenHolderRevenueFundAbstractions[network.name]);
 
         const spinner = ora();
         try {
@@ -91,20 +93,20 @@ module.exports = {
 
             spinner.start('Obtaining claimable amount');
             const [claimableAmount, stagedAmount] = await Promise.all([
-                range.claimableFeesFn.call(claimant, wallet, currency, range.start, range.end),
+                range.claimableFeesFn.call(claimant, wallet, currency, range.first, range.last),
                 claimant.withdrawableFees(wallet, currency)
             ]);
-            spinner.succeed(`Claimable amount of ${tokenInfo.symbol} is ${ethers.utils.formatUnits(claimableAmount, tokenInfo.decimals)}`);
+            spinner.succeed(`Claimable amount of ${tokenInfo.symbol} is ${claimableAmount}`);
 
-            if (stagedAmount.gt(0))
-                spinner.succeed(`Previously claimed (and not withdrawn) amount of ${tokenInfo.symbol} is ${ethers.utils.formatUnits(stagedAmount, tokenInfo.decimals)}`);
+            if (0 < parseFloat(stagedAmount))
+                spinner.succeed(`Previously claimed (and not withdrawn) amount of ${tokenInfo.symbol} is ${stagedAmount}`);
 
-            if (claimableAmount.gt(0)) {
-                spinner.start(`Claiming ${ethers.utils.formatUnits(claimableAmount, tokenInfo.decimals)} ${tokenInfo.symbol}`);
-                const claimAndStageTx = await range.claimFeesFn.call(claimant, wallet, currency, range.start, range.end, options);
+            if (0 < parseFloat(claimableAmount)) {
+                spinner.start(`Claiming ${claimableAmount} ${tokenInfo.symbol}`);
+                const claimAndStageTx = await range.claimFeesFn.call(claimant, wallet, currency, range.first, range.last, options);
 
                 await provider.getTransactionConfirmation(claimAndStageTx.hash, timeout);
-                spinner.succeed(`Claim of ${ethers.utils.formatUnits(claimableAmount, tokenInfo.decimals)} ${tokenInfo.symbol} confirmed`);
+                spinner.succeed(`Claim of ${claimableAmount} ${tokenInfo.symbol} confirmed`);
             }
             else {
                 spinner.succeed('Nothing to claim');
@@ -112,15 +114,15 @@ module.exports = {
 
             spinner.start('Obtaining withdrawable amount');
             const withdrawableAmount = await claimant.withdrawableFees(wallet, currency);
-            spinner.succeed(`Withdrawable amount of ${tokenInfo.symbol} is ${ethers.utils.formatUnits(withdrawableAmount, tokenInfo.decimals)}`);
+            spinner.succeed(`Withdrawable amount of ${tokenInfo.symbol} is ${withdrawableAmount}`);
 
-            if (withdrawableAmount.gt(0)) {
-                spinner.start(`Withdrawing ${ethers.utils.formatUnits(withdrawableAmount, tokenInfo.decimals)} ${tokenInfo.symbol}`);
+            if (0 < parseFloat(withdrawableAmount)) {
+                spinner.start(`Withdrawing ${withdrawableAmount} ${tokenInfo.symbol}`);
                 const withdrawableMonetaryAmount = await nahmii.MonetaryAmount.from(withdrawableAmount, tokenInfo.currency);
                 const withdrawTx = await claimant.withdrawFees(wallet, withdrawableMonetaryAmount, options);
 
                 await provider.getTransactionConfirmation(withdrawTx.hash, timeout);
-                spinner.succeed(`Withdrawal of ${ethers.utils.formatUnits(withdrawableAmount, tokenInfo.decimals)} ${tokenInfo.symbol} confirmed`);
+                spinner.succeed(`Withdrawal of ${withdrawableAmount} ${tokenInfo.symbol} confirmed`);
             }
             else {
                 spinner.succeed('Nothing to withdraw');
