@@ -2,26 +2,37 @@
 
 const dbg = require('../../dbg');
 const nahmii = require('nahmii-sdk');
-const {strip0x} = nahmii.utils;
 
 module.exports = {
     command: 'receipts',
     describe: 'Show receipts for my executed payments',
-    builder: {},
-    handler: async () => {
+    builder: yargs => {
+        yargs.options('from-nonce', {
+            desc: 'Earliest possible nonce of receipt',
+            type: 'number',
+            default: 0
+        });
+        yargs.options('limit', {
+            desc: 'Max number of receipts returned',
+            type: 'number',
+            default: 10
+        });
+        yargs.options('ascending', {
+            desc: 'Return receipts in temporal ascending order',
+            type: 'boolean',
+            default: false
+        });
+    },
+    handler: async (argv) => {
         const config = require('../../config');
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
 
-        const isMyReceipt = (receipt) => {
-            return strip0x(receipt.sender.wallet.toUpperCase()) === strip0x(config.wallet.address.toUpperCase())
-                || strip0x(receipt.recipient.wallet.toUpperCase()) === strip0x(config.wallet.address.toUpperCase());
-        };
-
         try {
-            let receipts = await provider.getAllReceipts();
+            let receipts = await provider.getWalletReceipts(
+                config.wallet.address, argv.fromNonce, argv.limit, argv.ascending
+            );
             if (!receipts.length)
                 receipts = [];
-            receipts = receipts.filter(isMyReceipt);
             console.log(JSON.stringify(receipts));
         }
         catch (err) {
