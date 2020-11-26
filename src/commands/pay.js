@@ -8,7 +8,13 @@ const ethers = require('ethers');
 module.exports = {
     command: 'pay <amount> <currency> to <recipient>',
     describe: 'Send <amount> of <currency> from your current wallet to the <recipient>\'s wallet',
-    builder: {},
+    builder: yargs => {
+        yargs.option('payload', {
+            desc: 'Stringified payload of payment, with a maximum length of 256 characters',
+            type: 'string',
+            hidden: true
+        });
+    },
     handler: async (argv) => {
         const config = require('../config');
         const provider = await nahmii.NahmiiProvider.from(config.apiRoot, config.appId, config.appSecret);
@@ -23,7 +29,7 @@ module.exports = {
             const recipient = prefix0x(argv.recipient);
             const sender = prefix0x(config.wallet.address);
 
-            const payment = new nahmii.Payment(amount, sender, recipient, wallet);
+            const payment = new nahmii.Payment(amount, sender, recipient, wallet, undefined, argv.payload);
             await payment.sign();
 
             const response = await payment.register();
